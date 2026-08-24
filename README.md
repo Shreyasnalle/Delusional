@@ -51,3 +51,11 @@ For each of the three fraud vectors, the system runs an independent workflow:
 5. **FALSE NEGATIVES:** Identify the specific attacks that successfully evaded detection.
 6. **REGENERATE:** Use the attack generator to create harder, perturbed attack variants specifically targeting the blind spots discovered in step 5.
 7. **RETRAIN:** Combine the original and hardened attack batches, retrain the classifier, and repeat the loop to continuously harden the defense.
+
+---
+
+## Datasets & References
+
+### Synthetic Identity Fraud → Mule Account Bootstrapping dataset
+- [IBM Transactions for Anti-Money Laundering (AML) Dataset](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml/data?select=HI-Medium_Patterns.txt)
+- [IBM Multi-GNN Repository](https://github.com/IBM/Multi-GNN)
