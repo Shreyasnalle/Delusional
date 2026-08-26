@@ -1,0 +1,26 @@
+# Virtual Environments & Python Cache
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+
+# Cloned External Repos & Data Folders
+muleaccount/
+data/
+*.csv
+*.txt
+*.zip
+*.pt
+*.pth
+
+# Environment & Secrets & IDE
+.env
+.env.*
+.kaggle/
+*kaggle*.json
+*access_token*
+.vscode/
+.idea/
+.DS_Store
