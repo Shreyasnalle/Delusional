@@ -15,5 +15,5 @@ def load_aml_dataset(file_name = "HI-Large_Trans.csv") :
         else :
             csv_file_path = os.path.join(dataset_dir, file_name) 
 
-    df = pd.read_csv(csv_file_path, nrows=SAFE_NROWS)
+    df = pd.read_csv(csv_file_path, nrows = SAFE_NROWS)
     return df
