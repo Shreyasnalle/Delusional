@@ -10,6 +10,8 @@ __pycache__/
 muleaccount/
 data/
 *.csv
+formatted_transactions.csv
+model/*.csv
 *.txt
 *.zip
 *.pt
