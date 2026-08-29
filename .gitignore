@@ -28,3 +28,4 @@ data/
 *.zip
 !best_model.pt
 !**/best_model.pt
+backend/.env
