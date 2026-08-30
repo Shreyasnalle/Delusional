@@ -30,7 +30,7 @@ export default function LandingPage() {
     totalTransactions: "100,000",
     totalFrauds: "39,790 (39.8%)",
     totalNormal: "60,210 (60.2%)",
-    attackFilename: "attack_1.csv"
+    attackFilename: "ATTACK 1"
   });
 
   // Card 3 Received Defend Status from Backend
@@ -38,7 +38,7 @@ export default function LandingPage() {
 
   // Final Report & Card 1 Metrics received from Backend
   const [modelMetrics, setModelMetrics] = useState({
-    savePath: "fine_tuned_model_1.pt",
+    savePath: "Fine Tuned Model 1",
     totalTransactions: 100000,
     totalRealTransactions: 60210,
     totalTrueFrauds: 39790,
@@ -127,11 +127,13 @@ export default function LandingPage() {
           if (data.step === "attacking") {
             setCurrentStep("attacking");
           } else if (data.step === "attack_complete") {
+            const rawFile = data.attack_filename || `attack_${modelCount}.csv`;
+            const formattedName = rawFile.replace(/attack_(\d+)\.csv/i, "ATTACK $1").replace(/_/g, " ").replace(/\.csv/i, "").toUpperCase();
             setAttackMetrics({
               totalTransactions: data.total_transactions || "100,000",
               totalFrauds: data.total_frauds || "39,790 (39.8%)",
               totalNormal: data.total_normal || "60,210 (60.2%)",
-              attackFilename: data.attack_filename || `attack_${modelCount}.csv`
+              attackFilename: formattedName
             });
           } else if (data.step === "defending") {
             setCurrentStep("defending");
@@ -149,9 +151,13 @@ export default function LandingPage() {
               const totalReal = m.total_real_transactions ?? (totalTx - totalFraud);
               const precVal = m.after?.precision ?? 0.8499;
               const precPctStr = `${(precVal * 100).toFixed(2)}%`;
+              const rawSavePath = m.save_path || `fine_tuned_model_${modelCount}.pt`;
+              const matchNum = rawSavePath.match(/(\d+)/);
+              const modelNum = matchNum ? matchNum[1] : modelCount;
+              const formattedCheckpoint = `Fine Tuned Model ${modelNum}`;
 
               setModelMetrics({
-                savePath: m.save_path || `fine_tuned_model_${modelCount}.pt`,
+                savePath: formattedCheckpoint,
                 totalTransactions: totalTx,
                 totalRealTransactions: totalReal,
                 totalTrueFrauds: totalFraud,
@@ -254,9 +260,6 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-2">
                 <h2 className="text-base font-bold tracking-widest text-white uppercase">MODEL INSIGHTS</h2>
-                <span className="text-xs font-bold tracking-wider px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 uppercase">
-                  Model {modelCount}
-                </span>
               </div>
 
               {/* STATS DISPLAY */}
@@ -301,9 +304,8 @@ export default function LandingPage() {
 
                 {/* Precision Hover Tooltip Card */}
                 <div className="absolute right-0 bottom-full mb-2 hidden group-hover/precision:flex flex-col w-72 p-3.5 rounded-xl bg-[#081021] border border-sky-400/60 shadow-[0_10px_35px_rgba(0,0,0,0.95)] text-xs z-[100] animate-fade-in backdrop-blur-2xl">
-                  <div className="flex items-center justify-between mb-1.5 border-b border-slate-700/80 pb-1.5">
+                  <div className="mb-1.5 border-b border-slate-700/80 pb-1.5">
                     <span className="font-bold text-sky-300 uppercase tracking-wider text-xs">WHAT IS PRECISION?</span>
-                    <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">ALERT ACCURACY</span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-slate-100 normal-case font-normal">
                     When the GNN flags a transaction as fraud, this represents the exact percentage that are actual fraud vs false alarms on clean customers.
@@ -361,19 +363,15 @@ export default function LandingPage() {
           {/* CARD 3 — DEFEND */}
           <div ref={card3Ref} className={cardClass}>
             <div>
-              <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5">
+              <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-2">
                 <h2 className="text-base font-bold tracking-widest text-white uppercase">DEFEND</h2>
-              </div>
-
-              {/* Centered Multi Hetero GNN Shield Badge */}
-              <div className="flex justify-center my-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-widest px-3 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30">
+                <span className="text-[11px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30">
                   MULTI HETERO GNN SHIELD
                 </span>
               </div>
 
               {/* Clean Status of Defend */}
-              <div className="bg-[#060c18]/90 p-3 rounded-lg border border-slate-800 h-[85px] flex flex-col justify-center text-center">
+              <div className="bg-[#060c18]/90 p-3 rounded-lg border border-slate-800 h-[115px] flex flex-col justify-center items-center text-center">
                 <p className="text-xs font-bold text-slate-300 tracking-wider uppercase mb-1">
                   STATUS OF DEFEND
                 </p>
@@ -391,7 +389,7 @@ export default function LandingPage() {
 
             <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400 uppercase tracking-wider">
               <span>Shield Status</span>
-              <span className="font-mono text-sky-300">{currentStep === "complete" ? "Verified" : "Active"}</span>
+              <span className="font-mono text-sky-300">{currentStep === "complete" ? "Ready" : "Active"}</span>
             </div>
           </div>
 
@@ -404,7 +402,7 @@ export default function LandingPage() {
           <button
             onClick={handleStartSimulation}
             disabled={isRunning}
-            className="group px-9 py-2.5 rounded-full font-bold text-white text-sm tracking-widest uppercase transition-all duration-300 bg-[#0b1426]/95 hover:bg-[#111e38] border border-slate-700/60 shadow-xl hover:scale-105 active:scale-95 disabled:opacity-75 cursor-pointer z-20 mb-6"
+            className="px-9 py-2.5 rounded-full font-bold text-white text-sm tracking-widest uppercase transition-transform duration-300 bg-[#0b1426]/95 hover:bg-[#111e38] border border-slate-700/60 shadow-xl hover:scale-105 active:scale-95 disabled:opacity-75 cursor-pointer z-20 mb-6"
           >
             {isRunning ? "EVALUATING..." : "START"}
           </button>
@@ -519,7 +517,7 @@ export default function LandingPage() {
             
             <div className="mb-4">
               <h3 className="text-xl font-bold uppercase tracking-wider text-white">BLUE TEAM DEFENSE COMPARISON REPORT</h3>
-              <p className="text-xs text-sky-200/70 tracking-widest uppercase">Autonomous Fine-Tuning Performance Benchmark</p>
+              <p className="text-xs text-sky-200/70 tracking-widest uppercase">Autonomous Fine-Tuning Performance</p>
             </div>
 
             {!hasRun ? (
