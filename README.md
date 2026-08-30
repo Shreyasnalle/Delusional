@@ -14,7 +14,7 @@ My system focuses on 5 high impact, GenAI amplified financial crimes that challe
 2. **Automated Smurfing & Micro-Splitting**  
    Large illicit financial targets are broken down into hundreds of randomized micro-transactions below regulatory reporting thresholds, so that the stolen amount is kept untracked.
 3. **Temporal Poisson Smoothing & Time-Delta Masking**  
-   Transaction time intervals are sampled using stochastic Poisson process distributions ($\Delta t \sim \text{Poisson}(\lambda)$) to eliminate periodic burst signatures that trigger static anomaly rules, thus passing the trained models capabilities mathematically. 
+   Transaction time intervals are sampled using stochastic Poisson process distributions to eliminate periodic burst signatures that trigger static anomaly rules, thus passing the trained models capabilities mathematically. 
 4. **Indian Business Hours Masking (IST Realism)**  
    Timestamps are automatically aligned with Indian Standard Time commercial banking windows (09:30 AM – 06:30 PM IST), blending malicious edges seamlessly into high-volume domestic payment channels (UPI, NEFT, RTGS, IMPS), which keeps the fraud out of sight.
 5. **Graph Topology Evasion & Noise Injection**  
@@ -50,14 +50,13 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
-**Start Simulation Cycle**
-➔ **1. Red Team (Groq LLM Architect)**: Analyzes GNN blind spots & designs evasive attack strategy  
-➔ **2. Procedural Execution Engine**: Generates 100,000 transactions with Poisson time-deltas & IST business hours  
-➔ **3. Blue Team Baseline Evaluation**: Multi-Hetero GNN Shield scores incoming edge embeddings  
-➔ **4. Hard-Example Mining**: Extracts missed frauds (False Negatives) and false alarms (False Positives)  
-➔ **5. Active GNN Fine-Tuning**: Retrains GNN weights for 3 epochs using AdamW & weighted cross-entropy  
-➔ **6. Final Evaluation & Report**: Updates precision metrics and populates comparison report  
-➔ **7. Evasion Memory Export**: Saves remaining missed frauds to `unnoticed_frauds.csv` for the next attack cycle  
+```text
+[Start Simulation] ➔ [Red Team Groq LLM] ➔ [Procedural Attack Engine] ➔ [Multi-Hetero GNN Baseline]
+                                                                                   │
+                                                                        (Extract Hard Examples)
+                                                                                   │
+[LLM Feedback Loop] ◄── [Export Unnoticed Frauds] ◄── [Precision Report] ◄── [Active GNN Fine-Tuning]
+```
 
 ---
 
