@@ -329,8 +329,8 @@ def run_attack_generator(unnoticed_frauds_df=None):
         })
 
     attack_params = generator.prompt_llm_architect(sample_df)
-    # Reduce rows from 100k to 15k to prevent OOM (Status 137) on Render Free Tier
-    output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=15000, max_fraud_ratio=dynamic_fraud_ratio)
+    # Reduce rows to 5k to strictly prevent OOM (Status 137) on Render Free Tier
+    output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=5000, max_fraud_ratio=dynamic_fraud_ratio)
     return output_file
 
 if __name__ == "__main__":

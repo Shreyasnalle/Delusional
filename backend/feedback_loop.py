@@ -1,6 +1,7 @@
 import os
 import glob
 import torch
+torch.set_num_threads(1)
 import pandas as pd
 import numpy as np
 import tqdm
@@ -10,11 +11,11 @@ import torch.nn.functional as F
 from torch_geometric.data import HeteroData
 from torch_geometric.nn import GINEConv, BatchNorm, Linear, to_hetero
 
-BATCH_SIZE = 2048
+BATCH_SIZE = 512
 NUM_NEIGHBORS = 50
 N_HIDDEN = 64
 N_GNN_LAYERS = 2
-EPOCHS = 3
+EPOCHS = 1
 LEARNING_RATE = 5e-4
 
 class GINe(torch.nn.Module):

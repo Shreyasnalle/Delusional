@@ -2,6 +2,8 @@ import os
 import json
 import asyncio
 import pandas as pd
+import torch
+torch.set_num_threads(1)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
