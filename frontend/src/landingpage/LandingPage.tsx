@@ -25,7 +25,6 @@ export default function LandingPage() {
   const [hasRun, setHasRun] = useState(false);
   const [modelCount, setModelCount] = useState(1);
 
-  // Card 2 Received Records from Backend
   const [attackMetrics, setAttackMetrics] = useState({
     totalTransactions: "100,000",
     totalFrauds: "39,790 (39.8%)",
@@ -33,10 +32,8 @@ export default function LandingPage() {
     attackFilename: "ATTACK 1"
   });
 
-  // Card 3 Received Defend Status from Backend
   const [defendStatus, setDefendStatus] = useState<"Standby" | "Defending..." | "Defending Done">("Standby");
 
-  // Final Report & Card 1 Metrics received from Backend
   const [modelMetrics, setModelMetrics] = useState({
     savePath: "Fine Tuned Model 1",
     totalTransactions: 100000,
@@ -70,7 +67,6 @@ export default function LandingPage() {
   const [pathD, setPathD] = useState("");
   const [arrowHeadPos, setArrowHeadPos] = useState({ x: 0, y: 0 });
 
-  // Dynamic SVG path connecting Card 3 -> Arrow Anchor -> Card 1
   useEffect(() => {
     const updatePath = () => {
       if (!card1Ref.current || !card3Ref.current || !mainRef.current || !arrowAnchorRef.current) return;
@@ -141,7 +137,7 @@ export default function LandingPage() {
           } else if (data.step === "defending_complete") {
             setDefendStatus("Defending Done");
           } else if (data.step === "finetuning") {
-            setCurrentStep("finetuning"); // Arrow speed fastens!
+            setCurrentStep("finetuning");
           } else if (data.step === "complete") {
             eventSource.close();
             if (data.metrics) {
@@ -214,13 +210,13 @@ export default function LandingPage() {
     }, 2800);
 
     setTimeout(() => {
-      setCurrentStep("finetuning"); // Arrow speed fastens!
+      setCurrentStep("finetuning");
     }, 3200);
 
     setTimeout(() => {
       setHasRun(true);
       setModelCount(prev => prev + 1);
-      setCurrentStep("complete"); // Arrow speed slows back to normal!
+      setCurrentStep("complete");
       setIsRunning(false);
     }, 5500);
   };
@@ -229,7 +225,6 @@ export default function LandingPage() {
 
   return (
     <div className="relative h-screen max-h-screen w-full overflow-hidden bg-[#070e1b] font-['Vercetti',sans-serif] text-slate-100 selection:bg-sky-500 selection:text-white flex flex-col justify-between">
-      {/* 1. STATIC SKY BACKGROUND LAYER */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none"
         style={{ backgroundImage: "url('/sky-bg.png')" }}
@@ -237,7 +232,6 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40" />
       </div>
 
-      {/* 2. TOP NAVBAR (CENTERED HEADER WITH INCREASED TOP MARGIN) */}
       <header className="relative z-20 w-full max-w-7xl mx-auto px-6 pt-8 md:pt-10 pb-2 flex items-center justify-center text-center">
         <div className="flex flex-col items-center justify-center text-center">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider text-white uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
@@ -249,20 +243,14 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* 3. MAIN HERO CONTENT CONTAINER */}
       <main ref={mainRef} className="relative z-10 w-full max-w-6xl mx-auto px-4 py-2 flex-1 flex flex-col justify-around">
-        
-        {/* TOP ROW: THREE EQUAL SIZED, EVENLY SPACED CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full items-stretch relative z-20">
-          
-          {/* CARD 1 — MODEL INSIGHTS (Shows stats ONLY when fine-tuning results arrive) */}
           <div ref={card1Ref} className={cardClass}>
             <div>
               <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-2">
                 <h2 className="text-base font-bold tracking-widest text-white uppercase">MODEL INSIGHTS</h2>
               </div>
 
-              {/* STATS DISPLAY */}
               <div className="bg-[#060c18]/90 p-3 rounded-lg border border-slate-800 h-[115px] flex flex-col justify-center">
                 {!hasRun ? (
                   <div className="text-center py-2">
@@ -290,7 +278,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Bottom Footer: Precision % with Hover Card Tooltip */}
             <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-300 relative">
               <span className="text-slate-400 uppercase tracking-wider">Status</span>
               
@@ -302,7 +289,6 @@ export default function LandingPage() {
                   ?
                 </span>
 
-                {/* Precision Hover Tooltip Card */}
                 <div className="absolute right-0 bottom-full mb-2 hidden group-hover/precision:flex flex-col w-72 p-3.5 rounded-xl bg-[#081021] border border-sky-400/60 shadow-[0_10px_35px_rgba(0,0,0,0.95)] text-xs z-[100] animate-fade-in backdrop-blur-2xl">
                   <div className="mb-1.5 border-b border-slate-700/80 pb-1.5">
                     <span className="font-bold text-sky-300 uppercase tracking-wider text-xs">WHAT IS PRECISION?</span>
@@ -315,7 +301,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* CARD 2 — ATTACK GENERATION (CENTERED STATUS) */}
           <div className={cardClass}>
             <div>
               <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-2">
@@ -360,7 +345,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* CARD 3 — DEFEND */}
           <div ref={card3Ref} className={cardClass}>
             <div>
               <div className="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-2">
@@ -370,7 +354,6 @@ export default function LandingPage() {
                 </span>
               </div>
 
-              {/* Clean Status of Defend */}
               <div className="bg-[#060c18]/90 p-3 rounded-lg border border-slate-800 h-[115px] flex flex-col justify-center items-center text-center">
                 <p className="text-xs font-bold text-slate-300 tracking-wider uppercase mb-1">
                   STATUS OF DEFEND
@@ -392,13 +375,9 @@ export default function LandingPage() {
               <span className="font-mono text-sky-300">{currentStep === "complete" ? "Ready" : "Active"}</span>
             </div>
           </div>
-
         </div>
 
-        {/* CENTER CONTROLS & ARROW AREA WITH INCREASED SPACING & GAPS */}
         <div className="my-3 flex flex-col items-center justify-center relative z-20">
-          
-          {/* 1. START BUTTON (MATCHES CARD EXACT COLOR, INCREASED GAP BELOW TO QUOTE) */}
           <button
             onClick={handleStartSimulation}
             disabled={isRunning}
@@ -407,7 +386,6 @@ export default function LandingPage() {
             {isRunning ? "EVALUATING..." : "START"}
           </button>
 
-          {/* 2. IMPROVING MODEL AFTER ATTACK LABEL (INCREASED GAPS ABOVE & BELOW) */}
           <div ref={arrowAnchorRef} className="z-20 my-2">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-sky-200 bg-[#0b1426] px-5 py-2 rounded-full border border-sky-400/40 shadow-lg backdrop-blur-md">
               {currentStep === "finetuning" ? (
@@ -418,17 +396,14 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* 3. PERFORMANCE REPORT BUTTON (INCREASED GAP BELOW ARROW LINE) */}
           <button
             onClick={() => setShowReport(true)}
             className="group px-6 py-2 rounded-full text-xs font-bold tracking-widest text-sky-200 hover:text-white uppercase transition-all duration-300 bg-[#0b1426]/90 hover:bg-slate-800 border border-sky-400/40 hover:border-sky-300 shadow-md hover:scale-105 cursor-pointer z-20 mt-6"
           >
             PERFORMANCE REPORT
           </button>
-
         </div>
 
-        {/* 4. ANIMATED FEEDBACK LOOP SVG ARROW */}
         {pathD && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
             <defs>
@@ -444,7 +419,6 @@ export default function LandingPage() {
               </filter>
             </defs>
 
-            {/* Glowing background line */}
             <path
               d={pathD}
               fill="none"
@@ -455,7 +429,6 @@ export default function LandingPage() {
               className="opacity-40"
             />
 
-            {/* Animated foreground dash line with dynamic speed */}
             <path
               d={pathD}
               fill="none"
@@ -465,7 +438,6 @@ export default function LandingPage() {
               className={`${currentStep === "finetuning" ? "animate-dash-flow-fast" : "animate-dash-flow"} opacity-90`}
             />
 
-            {/* Arrowhead pointing UP into Card 1 */}
             {arrowHeadPos.x > 0 && (
               <g transform={`translate(${arrowHeadPos.x}, ${arrowHeadPos.y}) rotate(0)`}>
                 <path
@@ -477,10 +449,8 @@ export default function LandingPage() {
             )}
           </svg>
         )}
-
       </main>
 
-      {/* 5. FOOTER (UPDATED LINKS) */}
       <footer 
         className="relative z-20 w-full max-w-7xl mx-auto px-6 py-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 font-['Vercetti',sans-serif]"
       >
@@ -510,18 +480,15 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* PERFORMANCE REPORT MODAL (POPULATED FROM BACKEND METRICS) */}
       {showReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-['Vercetti',sans-serif]">
           <div className="relative w-full max-w-2xl rounded-xl bg-[#0b1426] border border-slate-700 p-6 md:p-8 shadow-2xl text-white">
-            
             <div className="mb-4">
               <h3 className="text-xl font-bold uppercase tracking-wider text-white">BLUE TEAM DEFENSE COMPARISON REPORT</h3>
               <p className="text-xs text-sky-200/70 tracking-widest uppercase">Autonomous Fine-Tuning Performance</p>
             </div>
 
             {!hasRun ? (
-              /* Pre-run state: No performance report available yet */
               <div className="py-12 px-6 text-center my-6 bg-[#060c18]/90 rounded-lg border border-slate-800 space-y-2">
                 <p className="text-base font-bold text-amber-400 uppercase tracking-widest">
                   No Performance Report Available Yet
@@ -531,7 +498,6 @@ export default function LandingPage() {
                 </p>
               </div>
             ) : (
-              /* Post-run state: Full comparison report table with exact backend metrics */
               <div className="overflow-x-auto my-4">
                 <table className="w-full text-left text-sm">
                   <thead>
