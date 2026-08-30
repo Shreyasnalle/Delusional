@@ -52,10 +52,10 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ```text
 Start Simulation ➔ Red Team (generates attack) ➔ Blue Team (Multi-Hetero GNN model) ➔ Extract frauds which passed 
-       ▲                                                                                           │                         
-       │                                                                                  Active GNN Fine-Tuning
-       │                                                                                           │
-Use them to strengthen next attack generation  Export Unnoticed Frauds  Shows Precision Report  
+                                ▲                                                                  │                         
+                                │                                                         Active GNN Fine-Tuning
+                                │                                                                 │
+           Use them to strengthen next attack generation  <-  Export Unnoticed Frauds  <- Shows Precision Report  
 ```
 
 ---
