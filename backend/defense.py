@@ -178,13 +178,8 @@ def build_hetero_data(df):
     return h
 
 def main():
-    import os
-    if os.environ.get("SPACE_ID"):
-        device = torch.device("cpu")
-        print(f"Blue Team Engine (Defense) Initialized on CPU (Hugging Face Spaces ZeroGPU limitation)")
-    else:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Blue Team Engine (Defense) Initialized on {device}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Blue Team Engine (Defense) Initialized on {device}")
     
     attack_files = sorted(glob.glob('backend/attacks/attack_*.csv'))
     if not attack_files:

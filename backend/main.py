@@ -24,6 +24,7 @@ app.add_middleware(
 def health_check():
     return {"status": "ok", "service": "GenAI Fraud Defense Backend API"}
 
+
 async def generate_pipeline_events():
     def send_event(data_dict):
         return f"data: {json.dumps(data_dict)}\n\n"
@@ -84,8 +85,11 @@ async def generate_pipeline_events():
 
     event_queue = asyncio.Queue()
 
+    loop = asyncio.get_running_loop()
+
     def feedback_callback(evt):
-        event_queue.put_nowait(evt)
+        # The GNN runs in a worker thread; asyncio.Queue is not thread-safe.
+        loop.call_soon_threadsafe(event_queue.put_nowait, evt)
 
     task = asyncio.create_task(asyncio.to_thread(run_feedback_loop, attack_file, feedback_callback))
 
