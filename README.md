@@ -50,20 +50,14 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
-```mermaid
-flowchart TD
-    A[Start Simulation Cycle] --> B[Red Team: Groq LLM Architect]
-    B -->|Generate Attack Parameters| C[Procedural Attack Engine]
-    C -->|Generate 100k Attack Dataset| D[Card 2: Attack Generation Status]
-    D --> E[Blue Team: Multi-Hetero GNN Baseline]
-    E -->|Evaluate Edge Embeddings| F[Phase 1 Baseline Metrics]
-    F --> G[Extract Hard Examples: FN & FP]
-    G --> H[Phase 2 & 3: Active GNN Fine-Tuning]
-    H -->|3 Epochs AdamW Training| I[Phase 4: Final Evaluation]
-    I -->|Save Fine-Tuned Model| J[Card 1: Model Insights Update]
-    J --> K[Export Unnoticed Frauds]
-    K -->|Feedback Loop| B
-```
+**Start Simulation Cycle**
+➔ **1. Red Team (Groq LLM Architect)**: Analyzes GNN blind spots & designs evasive attack strategy  
+➔ **2. Procedural Execution Engine**: Generates 100,000 transactions with Poisson time-deltas & IST business hours  
+➔ **3. Blue Team Baseline Evaluation**: Multi-Hetero GNN Shield scores incoming edge embeddings  
+➔ **4. Hard-Example Mining**: Extracts missed frauds (False Negatives) and false alarms (False Positives)  
+➔ **5. Active GNN Fine-Tuning**: Retrains GNN weights for 3 epochs using AdamW & weighted cross-entropy  
+➔ **6. Final Evaluation & Report**: Updates precision metrics and populates comparison report  
+➔ **7. Evasion Memory Export**: Saves remaining missed frauds to `unnoticed_frauds.csv` for the next attack cycle  
 
 ---
 
