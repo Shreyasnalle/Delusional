@@ -1,24 +1,24 @@
 # GENAI FRAUD DEFENSE
-### Self-Improving Multi GNN Model for GenAI Powered Payment Frauds
+### Self-Improving Multi-GNN Model for GenAI-Powered Payment Frauds
 
-**GenAI Fraud Defense** is an autonomous, closed loop Red Team vs Blue Team platform which is designed to generate, evaluate and dynamically adapt to modern AI driven financial crime. The system pairs an LLM driven Red Team Adversarial Architect with a Heterogeneous Graph Neural Network (Multi-GNN) Blue Team Defense Model in a continuous active learning loop.
+**GenAI Fraud Defense** is an autonomous, closed-loop Red Team vs. Blue Team platform designed to generate, evaluate, and dynamically adapt to modern AI-driven financial crimes. The system pairs an LLM-driven Red Team Adversarial Architect with a Heterogeneous Graph Neural Network (Multi-GNN) Blue Team Defense Model in a continuous active learning loop.
 
 ---
 
 ## 1. Fraud Vectors Covered (Identify Phase)
 
-My system focuses on 5 high impact, GenAI amplified financial crimes that challenge static rule engines and traditional Machine Learning models :
+The system focuses on 5 high-impact, GenAI-amplified financial crimes that challenge static rule engines and traditional machine learning models:
 
 1. **Synthetic Identity & Mule Network Bootstrapping**  
-   Stolen credentials and synthetic identities are combined to open bank accounts. These accounts remain dormant or low activity before suddenly executing rapid fund transfers.
+   Stolen credentials and synthetic identities are combined to open bank accounts. These accounts remain dormant or low-activity before suddenly executing rapid fund transfers.
 2. **Automated Smurfing & Micro-Splitting**  
-   Large illicit financial targets are broken down into hundreds of randomized micro-transactions below regulatory reporting thresholds, so that the stolen amount is kept untracked.
+   Large illicit financial targets are broken down into hundreds of randomized micro-transactions below regulatory reporting thresholds, keeping the stolen amounts untracked.
 3. **Temporal Poisson Smoothing & Time-Delta Masking**  
-   Transaction time intervals are sampled using stochastic Poisson process distributions to eliminate periodic burst signatures that trigger static anomaly rules, thus passing the trained models capabilities mathematically. 
+   Transaction time intervals are sampled using stochastic Poisson process distributions to eliminate periodic burst signatures that trigger static anomaly rules, thus bypassing the trained model's detection capabilities mathematically. 
 4. **Indian Business Hours Masking (IST Realism)**  
-   Timestamps are automatically aligned with Indian Standard Time commercial banking windows (09:30 AM – 06:30 PM IST), blending malicious edges seamlessly into high-volume domestic payment channels (UPI, NEFT, RTGS, IMPS), which keeps the fraud out of sight.
+   Timestamps are automatically aligned with commercial banking windows (09:30 AM – 06:30 PM), blending malicious edges seamlessly into high-volume domestic payments, which keeps the fraud out of sight.
 5. **Graph Topology Evasion & Noise Injection**  
-   Legitimate-looking "noise" transactions are strategically injected between malicious nodes to artificially lower node degree centrality, alter in/out port ratios and pass unnoticed. 
+   Legitimate-looking "noise" transactions are strategically injected between malicious nodes to artificially lower node degree centrality, alter in/out port ratios, and pass unnoticed. 
 
 ---
 
@@ -27,9 +27,9 @@ My system focuses on 5 high impact, GenAI amplified financial crimes that challe
 The **Red Team Engine** simulates evasive payment fraud through a two-stage process:
 
 1. **LLM Adversarial Architect (Groq AI)**  
-   The Red Team queries LLM using transaction schemas and missed fraud patterns (`unnoticed_frauds.csv`). The LLM analyzes GNN blind spots and outputs raw JSON attack parameters specifying hub sizes, micro amount boundaries, Poisson time-delta rates and noise ratios.
+   The Red Team queries the LLM using transaction schemas and missed fraud patterns (`unnoticed_frauds.csv`). The LLM analyzes GNN blind spots and outputs raw JSON attack parameters specifying hub sizes, micro-amount boundaries, Poisson time-delta rates, and noise ratios.
 2. **Procedural Execution Engine**  
-   The execution engine scales the LLM parameters into 100,000 synthetic transaction datasets with dynamic fraud ratios (10,000 to 60,000 frauds). Transaction timestamps, amounts, payment channels and bank routing are synthesized in real time.
+   The execution engine scales the LLM parameters into 100,000 synthetic transaction datasets with dynamic fraud ratios (10,000 to 60,000 frauds). Transaction timestamps, amounts, payment channels, and bank routing are synthesized in real time.
 
 ---
 
@@ -44,18 +44,18 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 3. **Autonomous GNN Fine-Tuning**  
    The GNN model undergoes 3 epochs of active fine-tuning using AdamW optimization and class-weighted cross-entropy loss.
 4. **Active Adaptation & Evasion Memory**  
-   The fine-tuned model thus broden's it boundaries of fraud detection. Remaining missed frauds are exported to `unnoticed_frauds.csv` so the Red Team LLM can target new model blind spots in subsequent cycles, thus parallely making the Red Team stronger as well. 
+   The fine-tuned model thus broadens its boundaries of fraud detection. Remaining missed frauds are exported to `unnoticed_frauds.csv` so the Red Team LLM can target new model blind spots in subsequent cycles, thereby making the Red Team stronger in parallel as well. 
 
 ---
 
 ## 4. End-to-End System Workflow
 
 ```text
-[Start Simulation] ➔ [Red Team Groq LLM] ➔ [Procedural Attack Engine] ➔ [Multi-Hetero GNN Baseline]
-                                                                                   │
-                                                                        (Extract Hard Examples)
-                                                                                   │
-[LLM Feedback Loop] ◄── [Export Unnoticed Frauds] ◄── [Precision Report] ◄── [Active GNN Fine-Tuning]
+Start Simulation ➔ Red Team (generates attack) ➔ Blue Team (Multi-Hetero GNN model) ➔ Extract frauds which passed 
+       ▲                                                                                           │                         
+       │                                                                                  Active GNN Fine-Tuning
+       │                                                                                           │
+Use them to strengthen next attack generation  Export Unnoticed Frauds  Shows Precision Report  
 ```
 
 ---
@@ -91,7 +91,7 @@ To run the full stack locally:
 ---
 
 ### Kaggle GPU Cloud Server Code
-For training large graph datasets on GPU, use **Kaggle GPU Instances** (Recommended GPU: **Kaggle T4 x2 GPU** or **NVIDIA P100 GPU**).
+For training large graph datasets on GPU, use **Kaggle GPU Instances** (Recommended GPU: **Kaggle T4 x2 GPU**).
 
 Run the following code block in a Kaggle Notebook cell to launch a remote Jupyter server via Cloudflare Tunnel:
 
