@@ -4,28 +4,52 @@ venv/
 env/
 ENV/
 __pycache__/
+*cache*/
+__cahce__/
 *.py[cod]
+*$py.class
 
-# Cloned External Repos & Data Folders
-muleaccount/
-data/
+# IDE & Tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+__MACOSX/
 
-# Environment & Secrets & IDE
+# Environment Variables & Secret Files
 .env
 .env.*
+.env.template
+*.env
 .kaggle/
 *kaggle*.json
 *access_token*
-.vscode/
-.idea/
-.DS_Store
 
-# Ignore all CSV and PT files except best_model.pt
+# Data & Cloned External Repos
+muleaccount/
+data/
 *.csv
+!backend/attacks/.gitkeep
+
+# Model Checkpoints & Large Files
 *.pt
 *.pth
-*.txt
+*.bin
+*.onnx
+!model/best_model.pt
+!backend/fine_tunning/.gitkeep
+
+# Node & Next.js Build Artifacts
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+*.log
+
+# Temp files & Archives
 *.zip
-!best_model.pt
-!**/best_model.pt
-backend/.env
+*.tar.gz
+*.tmp

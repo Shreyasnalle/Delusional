@@ -1,49 +1,106 @@
-# Mastercard AI Defense Lab
+# GENAI FRAUD DEFENSE
+### Self-Improving Multi GNN Model for GenAI Powered Payment Frauds
 
-This repository contains the prototype for the Mastercard AI Defense Lab, built for the Mastercard Innovation Challenge at the Global Fintech Fest (GFF) 2026. The project is an end-to-end, closed-loop Red Team / Blue Team AI system that generates, detects, and dynamically adapts to emerging GenAI-powered payment fraud vectors.
-
----
-
-## 1. The Fraud We Are Covering (Red Team)
-
-We focus on a high-impact payment fraud vector that is simulatable at the transaction level and closely mirrors the modern financial crime landscape.
-
-### Synthetic Identity Fraud -> Mule Account Bootstrapping
-Fraudsters combine stolen PII (e.g., SSNs) with fabricated data and AI-generated headshots to open synthetic bank accounts. These accounts are aged with normal, low-value behavior for months before suddenly receiving large inbound transfers and rapidly dispersing funds across a network of other synthetic accounts (money mules).
+**GenAI Fraud Defense** is an autonomous, closed loop Red Team vs Blue Team platform which is designed to generate, evaluate and dynamically adapt to modern AI driven financial crime. The system pairs an LLM driven Red Team Adversarial Architect with a Heterogeneous Graph Neural Network (Multi-GNN) Blue Team Defense Model in a continuous active learning loop.
 
 ---
 
-## 2. How We Fight Back (Blue Team)
+## 1. Fraud Vectors Covered (Identify Phase)
 
-Our defense architecture utilizes modern, AI-driven approaches inspired directly by Mastercard's enterprise security suite to intercept these advanced attacks.
+My system focuses on 5 high impact, GenAI amplified financial crimes that challenge static rule engines and traditional Machine Learning models :
 
-### Defending Mule Account Bootstrapping (Inspired by TRACE & DI Pro)
-- Behavioral Discontinuity: We detect sudden jumps from dormant or small-purchase patterns to large-inflow-then-rapid-outflow activity.
-- Graph Linkage: We build a multi-institution account graph mapping shared devices, IPs, and beneficiary links. When one account is flagged, we inspect its graph neighborhood to uncover the entire mule ring.
-- Model: Graph Neural Networks (Multi-GNN) & XGBoost using account-level features combined with graph-derived features (shared-attribute clusters, degree centrality, temporal ports, and time deltas).
-
----
-
-## 3. Closed-Loop Workflow (The AI Arms Race)
-
-The core innovation of this platform is the adversarial feedback loop. The system does not just detect static fraud; it learns and evolves dynamically.
-
-Workflow Pipeline:
-1. IDENTIFY -> 2. GENERATE -> 3. DEFEND -> 4. EVALUATE -> 5. FALSE NEGATIVES -> 6. REGENERATE -> 7. RETRAIN
-
-1. IDENTIFY: Define the attack vector and mechanism.
-2. GENERATE: Simulate the attack accurately against a baseline dataset.
-3. DEFEND: Train the specialized Blue Team classifier and score the transactions.
-4. EVALUATE: Measure Precision, Recall, F1, AUC, and Decision Latency.
-5. FALSE NEGATIVES: Identify the specific attacks that successfully evaded detection.
-6. REGENERATE: Use the attack generator to create harder, perturbed attack variants specifically targeting the blind spots discovered in step 5.
-7. RETRAIN: Combine the original and hardened attack batches, retrain the classifier, and repeat the loop to continuously harden the defense.
+1. **Synthetic Identity & Mule Network Bootstrapping**  
+   Stolen credentials and synthetic identities are combined to open bank accounts. These accounts remain dormant or low activity before suddenly executing rapid fund transfers.
+2. **Automated Smurfing & Micro-Splitting**  
+   Large illicit financial targets are broken down into hundreds of randomized micro-transactions below regulatory reporting thresholds, so that the stolen amount is kept untracked.
+3. **Temporal Poisson Smoothing & Time-Delta Masking**  
+   Transaction time intervals are sampled using stochastic Poisson process distributions ($\Delta t \sim \text{Poisson}(\lambda)$) to eliminate periodic burst signatures that trigger static anomaly rules, thus passing the trained models capabilities mathematically. 
+4. **Indian Business Hours Masking (IST Realism)**  
+   Timestamps are automatically aligned with Indian Standard Time commercial banking windows (09:30 AM – 06:30 PM IST), blending malicious edges seamlessly into high-volume domestic payment channels (UPI, NEFT, RTGS, IMPS), which keeps the fraud out of sight.
+5. **Graph Topology Evasion & Noise Injection**  
+   Legitimate-looking "noise" transactions are strategically injected between malicious nodes to artificially lower node degree centrality, alter in/out port ratios and pass unnoticed. 
 
 ---
 
-## 4. Running Kaggle Remote Session
+## 2. Red Team Attack Generation (Generative Red Teaming)
 
-To run the training notebook on Kaggle via cloudflared tunnel:
+The **Red Team Engine** simulates evasive payment fraud through a two-stage process:
+
+1. **LLM Adversarial Architect (Groq AI)**  
+   The Red Team queries LLM using transaction schemas and missed fraud patterns (`unnoticed_frauds.csv`). The LLM analyzes GNN blind spots and outputs raw JSON attack parameters specifying hub sizes, micro amount boundaries, Poisson time-delta rates and noise ratios.
+2. **Procedural Execution Engine**  
+   The execution engine scales the LLM parameters into 100,000 synthetic transaction datasets with dynamic fraud ratios (10,000 to 60,000 frauds). Transaction timestamps, amounts, payment channels and bank routing are synthesized in real time.
+
+---
+
+## 3. Blue Team Active Defense & Self-Improvement Loop
+
+The **Blue Team Engine** intercepts and adapts to evasive attacks through an active learning feedback loop:
+
+1. **Heterogeneous Graph Neural Network (Multi-GNN)**  
+   The defense pipeline constructs a multi-relational graph (`Account` $\rightarrow$ `To` $\rightarrow$ `Account`) using PyTorch Geometric GINe layers with edge attribute updates. The baseline model evaluates the full incoming dataset to flag suspicious edges.
+2. **Hard-Example Extraction & False Negative Mining**  
+   Transactions missed by the baseline model (False Negatives) and false alarms (False Positives) are extracted to form a specialized hard-example training pool.
+3. **Autonomous GNN Fine-Tuning**  
+   The GNN model undergoes 3 epochs of active fine-tuning using AdamW optimization and class-weighted cross-entropy loss.
+4. **Active Adaptation & Evasion Memory**  
+   The fine-tuned model thus broden's it boundaries of fraud detection. Remaining missed frauds are exported to `unnoticed_frauds.csv` so the Red Team LLM can target new model blind spots in subsequent cycles, thus parallely making the Red Team stronger as well. 
+
+---
+
+## 4. End-to-End System Workflow
+
+```mermaid
+flowchart TD
+    A[Start Simulation Cycle] --> B[Red Team: Groq LLM Architect]
+    B -->|Generate Attack Parameters| C[Procedural Attack Engine]
+    C -->|Generate 100k Attack Dataset| D[Card 2: Attack Generation Status]
+    D --> E[Blue Team: Multi-Hetero GNN Baseline]
+    E -->|Evaluate Edge Embeddings| F[Phase 1 Baseline Metrics]
+    F --> G[Extract Hard Examples: FN & FP]
+    G --> H[Phase 2 & 3: Active GNN Fine-Tuning]
+    H -->|3 Epochs AdamW Training| I[Phase 4: Final Evaluation]
+    I -->|Save Fine-Tuned Model| J[Card 1: Model Insights Update]
+    J --> K[Export Unnoticed Frauds]
+    K -->|Feedback Loop| B
+```
+
+---
+
+## 5. Developer & Code Inspection Guide
+
+### Local Setup & Execution
+To run the full stack locally:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Shreyasnalle/Delusional.git
+   cd Delusional
+   ```
+
+2. **Backend Setup (FastAPI + PyTorch GNN)**:
+   ```bash
+   conda create -n mastermoney python=3.9 -y
+   conda activate mastermoney
+   cd backend
+   pip install -r requirements.txt
+   uvicorn main:app --port 8000 --reload
+   ```
+
+3. **Frontend Setup (Next.js)**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Open `http://localhost:3000` in your browser.
+
+---
+
+### Kaggle GPU Cloud Server Code
+For training large graph datasets on GPU, use **Kaggle GPU Instances** (Recommended GPU: **Kaggle T4 x2 GPU** or **NVIDIA P100 GPU**).
+
+Run the following code block in a Kaggle Notebook cell to launch a remote Jupyter server via Cloudflare Tunnel:
 
 ```python
 import os, time
