@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
 torch-geometric
 groq
@@ -8,3 +9,4 @@ numpy
 python-dotenv
 tqdm
 kagglehub
+scikit-learn
