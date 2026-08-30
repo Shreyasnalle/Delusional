@@ -87,8 +87,8 @@ The defense model analyzes Port Numberings (in/out counts) and Time-Deltas to de
 
 Design parameters for 3 evasion-resistant attack strategies:
 1. Mule Bootstrapping: Complex hub-and-spoke networks with varying spoke sizes to avoid static topological signatures.
-2. Smurfing / Micro-Splitting: Breaking large laundered targets into highly randomized micro-transactions carefully below regulatory thresholds (e.g. $10k), with unpredictable time-deltas.
-3. Evasion Perturbation: Injecting dummy, legitimate-looking "noise" transactions between malicious edges to artificially inflate time-deltas and break the GNN's temporal continuity algorithms.
+2. Smurfing / Micro-Splitting: Breaking large laundered targets into micro-transactions using Temporal Poisson Smoothing to mimic organic human time-deltas.
+3. Indian Business Hours Evasion: Aligning transaction timestamps with Indian Standard Time (IST / IST Business Hours: 09:30 AM to 06:30 PM) to blend seamlessly into active banking traffic.
 
 Respond ONLY with a valid raw JSON object. Do not wrap it in markdown blockquotes like ```json.
 The structure MUST match this exactly:
@@ -96,16 +96,18 @@ The structure MUST match this exactly:
     "mule_network": {
         "num_hubs": 25,
         "spokes_per_hub": [10, 50],
-        "time_delta_seconds_range": [3, 120]
+        "time_delta_seconds_range": [15, 300]
     },
     "smurfing": {
         "target_amount_range": [150000, 800000],
         "split_count_range": [30, 90],
-        "max_micro_amount": 9950
+        "max_micro_amount": 9950,
+        "poisson_lambda_sec": 45
     },
     "evasion": {
         "noise_ratio": 0.35,
-        "noise_amount_range": [5, 100]
+        "noise_amount_range": [5, 100],
+        "business_hours_only": true
     }
 }
 """
@@ -140,20 +142,36 @@ The structure MUST match this exactly:
 
     def _default_attack_params(self):
         return {
-            "mule_network": {"num_hubs": 50, "spokes_per_hub": [3, 10], "time_delta_seconds_range": [5, 30]},
-            "smurfing": {"target_amount_range": [50000, 200000], "split_count_range": [10, 50], "max_micro_amount": 9900},
-            "evasion": {"noise_ratio": 0.15, "noise_amount_range": [5, 200]}
+            "mule_network": {"num_hubs": 50, "spokes_per_hub": [3, 10], "time_delta_seconds_range": [15, 180]},
+            "smurfing": {"target_amount_range": [50000, 200000], "split_count_range": [10, 50], "max_micro_amount": 9900, "poisson_lambda_sec": 40},
+            "evasion": {"noise_ratio": 0.25, "noise_amount_range": [5, 200], "business_hours_only": True}
         }
 
+    def _get_next_indian_business_timestamp(self, current_dt, seconds_delta):
+        """Advances current_dt by seconds_delta while keeping timestamps predominantly inside IST Business Hours (09:30 - 18:30 IST)."""
+        import numpy as np
+        current_dt += timedelta(seconds=seconds_delta)
+        
+        # If timestamp falls outside 09:30 - 18:30 IST (e.g. night hours), advance to 09:30 AM next morning with random jitter
+        if current_dt.hour < 9 or (current_dt.hour == 9 and current_dt.minute < 30) or current_dt.hour >= 18:
+            # Shift to next morning 09:30 AM + uniform noise
+            if current_dt.hour >= 18:
+                current_dt += timedelta(days=1)
+            jitter_mins = random.randint(0, 45)
+            jitter_secs = random.randint(0, 59)
+            current_dt = current_dt.replace(hour=9, minute=30, second=0) + timedelta(minutes=jitter_mins, seconds=jitter_secs)
+        return current_dt
+
     def generate_attacks(self, base_df, params, total_target_rows=100_000, max_fraud_ratio=0.4, unnoticed_frauds_df=None):
+        import numpy as np
         print(f"Scaling evasive attacks to {total_target_rows:,} transactions (Max Fraud limit: {max_fraud_ratio:.1%})")
         
         accounts = list(set(base_df['Account'].tolist() + base_df['Account.1'].tolist())) if 'Account' in base_df.columns else [f"ACC_{i}" for i in range(10000)]
-        currencies = base_df['Receiving Currency'].unique().tolist() if 'Receiving Currency' in base_df.columns else ["USD", "EUR", "GBP"]
-        payment_formats = base_df['Payment Format'].unique().tolist() if 'Payment Format' in base_df.columns else ["Wire", "Credit Card", "ACH"]
+        currencies = base_df['Receiving Currency'].unique().tolist() if 'Receiving Currency' in base_df.columns else ["INR", "USD", "EUR"]
+        payment_formats = base_df['Payment Format'].unique().tolist() if 'Payment Format' in base_df.columns else ["UPI", "NEFT", "RTGS", "IMPS"]
         
         generated_rows = []
-        base_time = datetime.now()
+        base_time = datetime.now().replace(hour=10, minute=0, second=0) # Start in Indian business hours (10:00 AM)
         
         target_fraud_rows = int(total_target_rows * max_fraud_ratio)
         current_fraud_count = 0
@@ -167,14 +185,17 @@ The structure MUST match this exactly:
             hub_acc = f"MULE_HUB_{random.randint(10000, 99999)}"
             spokes_range = mule_p.get("spokes_per_hub", [5, 10])
             num_spokes = random.randint(spokes_range[0], max(spokes_range[0], spokes_range[1]))
-            time_delta_range = mule_p.get("time_delta_seconds_range", [10, 60])
+            time_delta_range = mule_p.get("time_delta_seconds_range", [15, 180])
             
             for _ in range(num_spokes):
                 if current_fraud_count >= target_fraud_rows: break
                 spoke_acc = random.choice(accounts)
                 amount = random.uniform(1000, 50000)
-                t_delta = random.randint(time_delta_range[0], max(time_delta_range[0], time_delta_range[1]))
-                base_time += timedelta(seconds=t_delta)
+                
+                # Temporal Poisson process sampling for natural human time-deltas
+                poisson_delta = int(np.random.poisson(lam=mule_p.get("poisson_lambda_sec", 45)))
+                t_delta = max(time_delta_range[0], min(poisson_delta, time_delta_range[1] * 2))
+                base_time = self._get_next_indian_business_timestamp(base_time, t_delta)
                 
                 generated_rows.append(self._create_row(
                     timestamp=base_time.strftime("%Y/%m/%d %H:%M"),
@@ -188,6 +209,7 @@ The structure MUST match this exactly:
         amount_range = smurf_p.get("target_amount_range", [100000, 500000])
         split_range = smurf_p.get("split_count_range", [20, 60])
         max_micro = smurf_p.get("max_micro_amount", 9500)
+        poisson_lambda = smurf_p.get("poisson_lambda_sec", 40)
         
         num_smurf_attacks = (target_fraud_rows - current_fraud_count) // max(1, (split_range[0] + split_range[1]) // 2)
         
@@ -202,7 +224,10 @@ The structure MUST match this exactly:
             for _ in range(num_splits):
                 if current_fraud_count >= target_fraud_rows: break
                 micro_amount = min(target_amount / num_splits, max_micro) * random.uniform(0.85, 0.99)
-                base_time += timedelta(seconds=random.randint(1, 45))
+                
+                # Temporal Poisson process sampling to eliminate artificial burst patterns
+                poisson_delta = int(np.random.poisson(lam=poisson_lambda))
+                base_time = self._get_next_indian_business_timestamp(base_time, max(5, poisson_delta))
                 
                 generated_rows.append(self._create_row(
                     timestamp=base_time.strftime("%Y/%m/%d %H:%M"),
@@ -220,7 +245,9 @@ The structure MUST match this exactly:
         print(f"Injecting {clean_rows_needed:,} real/noise transactions to mask fraud")
         
         for _ in range(clean_rows_needed):
-            base_time += timedelta(seconds=random.randint(1, 100))
+            # Poisson time-delta for clean transactions simulating active Indian banking hours
+            clean_poisson_delta = int(np.random.poisson(lam=30))
+            base_time = self._get_next_indian_business_timestamp(base_time, max(2, clean_poisson_delta))
             is_noise = random.random() < noise_ratio
             
             amount = random.uniform(noise_amount_range[0], max(noise_amount_range[0], noise_amount_range[1])) if is_noise else random.uniform(10, 8000)
