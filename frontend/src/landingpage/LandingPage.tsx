@@ -114,7 +114,8 @@ export default function LandingPage() {
     setDefendStatus("Standby");
 
     try {
-      const eventSource = new EventSource("http://localhost:8000/api/run-pipeline-stream");
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const eventSource = new EventSource(`${backendUrl}/api/run-pipeline-stream`);
 
       eventSource.onmessage = (event) => {
         try {
