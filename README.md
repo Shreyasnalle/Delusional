@@ -1,35 +1,37 @@
 # GENAI FRAUD DEFENSE
 ### Self-Improving Multi-GNN Model for GenAI-Powered Payment Frauds
 
-**GenAI Fraud Defense** is an autonomous, closed-loop Red Team vs. Blue Team platform designed to generate, evaluate, and dynamically adapt to modern AI-driven financial crimes. The system pairs an LLM-driven Red Team Adversarial Architect with a Heterogeneous Graph Neural Network (Multi-GNN) Blue Team Defense Model in a continuous active learning loop.
+**GenAI Fraud Defense** is an autonomous, closed-loop Red Team vs Blue Team system designed to generate, evaluate and dynamically adapt to modern GenAI driven financial crimes. The system pairs an LLM-driven Red Team Adversarial Architect with a Heterogeneous Graph Neural Network (Multi-GNN) Blue Team Defense Model in a continuous active learning loop.
 
 ---
 
 ## 1. Fraud Vectors Covered (Identify Phase)
 
-The system focuses on 5 high-impact, GenAI-amplified financial crimes that challenge static rule engines and traditional machine learning models:
+The system focuses on 5 high-impact, GenAI amplified financial crimes that challenge static rule engines and traditional machine learning models:
 
 1. **Synthetic Identity & Mule Network Bootstrapping**  
    Stolen credentials and synthetic identities are combined to open bank accounts. These accounts remain dormant or low-activity before suddenly executing rapid fund transfers.
 2. **Automated Smurfing & Micro-Splitting**  
-   Large illicit financial targets are broken down into hundreds of randomized micro-transactions below regulatory reporting thresholds, keeping the stolen amounts untracked.
+   Large illicit financial targets are broken down into hundreds of randomized micro transactions below regulatory reporting thresholds, keeping the stolen amount untracked.
 3. **Temporal Poisson Smoothing & Time-Delta Masking**  
    Transaction time intervals are sampled using stochastic Poisson process distributions to eliminate periodic burst signatures that trigger static anomaly rules, thus bypassing the trained model's detection capabilities mathematically. 
-4. **Indian Business Hours Masking (IST Realism)**  
-   Timestamps are automatically aligned with commercial banking windows (09:30 AM – 06:30 PM), blending malicious edges seamlessly into high-volume domestic payments, which keeps the fraud out of sight.
+4. **Commercial Business Hours Masking**  
+   Timestamps are automatically aligned with commercial banking windows (09:30 AM – 06:30 PM), blending malicious edges seamlessly into high volume domestic payments, which keeps the fraud out of sight.
 5. **Graph Topology Evasion & Noise Injection**  
-   Legitimate-looking "noise" transactions are strategically injected between malicious nodes to artificially lower node degree centrality, alter in/out port ratios, and pass unnoticed. 
+   Legitimate-looking "noise" transactions are strategically injected between malicious nodes to artificially lower node degree centrality, alter in/out port ratios and pass unnoticed. 
 
 ---
 
-## 2. Red Team Attack Generation (Generative Red Teaming)
+## 2. Red Team Attack Generation (Generative Red Team)
 
-The **Red Team Engine** simulates evasive payment fraud through a two-stage process:
+The **Red Team Engine** simulates evasive payment fraud through a two stage process:
 
-1. **LLM Adversarial Architect (Groq AI)**  
-   The Red Team queries the LLM using transaction schemas and missed fraud patterns (`unnoticed_frauds.csv`). The LLM analyzes GNN blind spots and outputs raw JSON attack parameters specifying hub sizes, micro-amount boundaries, Poisson time-delta rates, and noise ratios.
+1. **LLM Adversarial Architect**  
+   The Red Team queries the LLM using transaction schemas and missed fraud patterns (`unnoticed_frauds.csv`). The LLM analyzes GNN blind spots and outputs raw JSON attack parameters specifying hub sizes, micro amount boundaries, Poisson time-delta rates and noise ratios.
 2. **Procedural Execution Engine**  
-   The execution engine scales the LLM parameters into 100,000 synthetic transaction datasets with dynamic fraud ratios (10,000 to 60,000 frauds). Transaction timestamps, amounts, payment channels, and bank routing are synthesized in real time.
+   The execution engine scales the LLM parameters into 100,000 synthetic transaction datasets with dynamic fraud ratios (10,000 to 60,000 frauds). Transaction timestamps, amounts, payment channels and bank routing are synthesized in real time.
+
+Thus covering all 5 identified GenAI fraud attacks above.
 
 ---
 
@@ -40,11 +42,11 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 1. **Heterogeneous Graph Neural Network (Multi-GNN)**  
    The defense pipeline constructs a multi-relational graph (`Account` $\rightarrow$ `To` $\rightarrow$ `Account`) using PyTorch Geometric GINe layers with edge attribute updates. The baseline model evaluates the full incoming dataset to flag suspicious edges.
 2. **Hard-Example Extraction & False Negative Mining**  
-   Transactions missed by the baseline model (False Negatives) and false alarms (False Positives) are extracted to form a specialized hard-example training pool.
+   Transactions missed by the baseline model (False Negatives) and false alarms (False Positives) are extracted to form a specialized hard-example training pool, which is later used for strengthening the model. 
 3. **Autonomous GNN Fine-Tuning**  
-   The GNN model undergoes 3 epochs of active fine-tuning using AdamW optimization and class-weighted cross-entropy loss.
+   The GNN model undergoes 3 epochs of active fine-tuning using AdamW optimization and class-weighted cross entropy loss.
 4. **Active Adaptation & Evasion Memory**  
-   The fine-tuned model thus broadens its boundaries of fraud detection. Remaining missed frauds are exported to `unnoticed_frauds.csv` so the Red Team LLM can target new model blind spots in subsequent cycles, thereby making the Red Team stronger in parallel as well. 
+   The fine-tuned model thus broadens its boundaries of fraud detection. Yet, the remaining missed frauds are again exported to `unnoticed_frauds.csv` so the Red Team LLM can target new model blind spots in subsequent cycles, thereby making the Red Team stronger in parallel as well. 
 
 ---
 
