@@ -1,3 +1,9 @@
+fastapi
+uvicorn[standard]
+torch
+torch-geometric
+groq
 pandas
+numpy
 python-dotenv
-google-genai
+tqdm
