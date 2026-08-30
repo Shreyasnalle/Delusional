@@ -218,7 +218,7 @@ def _get_next_model_filename(save_dir):
             continue
     return os.path.join(save_dir, f"fine_tuned_model_{max_idx + 1}.pt")
 
-def run_feedback_loop(attack_file=None):
+def run_feedback_loop(attack_file=None, callback=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Feedback Loop (Active Defense) Initialized on {device}")
     
@@ -264,8 +264,25 @@ def run_feedback_loop(attack_file=None):
     
     print("\n[Phase 1] Evaluating Baseline Defense")
     y_pred_base, tp1, fp1, tn1, fn1, p1, r1 = evaluate_model(model, eval_loader, device, y_true)
+
+    if callback:
+        callback({
+            "step": "defending_complete",
+            "message": "Defending done on generated attack dataset",
+            "before": {
+                "tp": int(tp1), "fn": int(fn1), "tn": int(tn1), "fp": int(fp1),
+                "precision": float(p1), "recall": float(r1),
+                "detected_str": f"{tp1:,}", "rate_str": f"{r1 * 100:.2f}%"
+            }
+        })
     
     print("\n[Phase 2] Constructing Fine-Tuning Dataset")
+    if callback:
+        callback({
+            "step": "finetuning",
+            "message": "Improving model after attack (updating GNN weights)..."
+        })
+
     fn_idx = np.where((y_pred_base == 0) & (y_true == 1))[0]
     fp_idx = np.where((y_pred_base == 1) & (y_true == 0))[0]
     tp_idx = np.where((y_pred_base == 1) & (y_true == 1))[0]
@@ -276,8 +293,6 @@ def run_feedback_loop(attack_file=None):
     
     target_count = min(10000, len(fn_idx), len(fp_idx))
     
-    # If the model is already perfect (or close to it) and has zero/too few hard examples, we still need to train 
-    # to avoid errors, or we can just skip training. Let's ensure a minimum batch by using TP/TN if FN/FP are empty.
     if target_count == 0:
         print("Model is highly accurate on this dataset; no hard examples found. Fine-tuning will use standard sampling.")
         target_count = 1000
@@ -346,12 +361,22 @@ def run_feedback_loop(attack_file=None):
     print("\n[Phase 4] Evaluating Fine-Tuned Defense on the entire attack dataset")
     y_pred_tuned, tp2, fp2, tn2, fn2, p2, r2 = evaluate_model(model, eval_loader, device, y_true)
     
+    total_tx1 = int(fn1 + tp1 + tn1 + fp1)
+    total_real1 = int(tn1 + fp1)
+    total_fraud1 = int(fn1 + tp1)
+
+    total_tx2 = int(fn2 + tp2 + tn2 + fp2)
+    total_real2 = int(tn2 + fp2)
+    total_fraud2 = int(fn2 + tp2)
+
     print("\n" + "="*60)
     print("BLUE TEAM DEFENSE COMPARISON REPORT")
     print("="*60)
     print(f"{'Metric':<30} | {'Before Fine-Tuning':<18} | {'After Fine-Tuning'}")
     print("-" * 60)
-    print(f"Total True Frauds              | {fn1+tp1:<18,} | {fn2+tp2:,}")
+    print(f"Total Transactions             | {total_tx1:<18,} | {total_tx2:,}")
+    print(f"Total Real Transactions        | {total_real1:<18,} | {total_real2:,}")
+    print(f"Total Fraud Transactions       | {total_fraud1:<18,} | {total_fraud2:,}")
     print(f"Frauds Detected (TP)           | {tp1:<18,} | {tp2:,} (+ {tp2-tp1:,})")
     print(f"Missed Frauds (FN)             | {fn1:<18,} | {fn2:,} (- {fn1-fn2:,})")
     print(f"{'Real Trans Passed (TN)':<30} | {tn1:<18,} | {tn2:,}")
@@ -361,15 +386,38 @@ def run_feedback_loop(attack_file=None):
     print(f"{'Recall (Fraud Catch Rate)':<30} | {r1:<18.4f} | {r2:.4f}")
     print("="*60)
     
-    # Extract the unnoticed frauds from the RAW dataframe
     missed_idx = np.where((y_pred_tuned == 0) & (y_true == 1))[0]
     unnoticed_frauds_df = raw_df.iloc[missed_idx].copy()
     
     unnoticed_path = os.path.join(os.path.dirname(__file__), 'attacks', 'unnoticed_frauds.csv')
     unnoticed_frauds_df.to_csv(unnoticed_path, index=False)
     print(f"Extracted {len(unnoticed_frauds_df)} unnoticed frauds and saved to {unnoticed_path} for the next attack iteration.")
-    
-    return unnoticed_frauds_df
 
+    metrics_report = {
+        "save_path": os.path.basename(save_path),
+        "total_transactions": total_tx1,
+        "total_real_transactions": total_real1,
+        "total_fraud_transactions": total_fraud1,
+        "before": {
+            "tp": int(tp1), "fn": int(fn1), "tn": int(tn1), "fp": int(fp1),
+            "precision": float(p1), "recall": float(r1),
+            "detected_str": f"{tp1:,}", "rate_str": f"{r1 * 100:.2f}%"
+        },
+        "after": {
+            "tp": int(tp2), "fn": int(fn2), "tn": int(tn2), "fp": int(fp2),
+            "precision": float(p2), "recall": float(r2),
+            "detected_str": f"{tp2:,}", "rate_str": f"{r2 * 100:.2f}%"
+        },
+        "total_true_frauds": total_fraud1,
+        "performance_pct": f"{r2 * 100:.2f}%"
+    }
+
+    if callback:
+        callback({
+            "step": "complete",
+            "metrics": metrics_report
+        })
+    
+    return unnoticed_frauds_df, metrics_report
 if __name__ == "__main__":
     run_feedback_loop()

@@ -269,11 +269,14 @@ def run_attack_generator(unnoticed_frauds_df=None):
         
     generator = AttackGenerator(raw_data_path=RAW_CSV_PATH)
     
+    # Dynamic fraud ratio between 10% and 60% (10,000 to 60,000 frauds for 100,000 total transactions)
+    dynamic_fraud_ratio = round(random.uniform(0.12, 0.58), 2)
+    print(f"\n[ATTACK GENERATOR] Dynamic target fraud ratio for this cycle: {dynamic_fraud_ratio * 100:.1f}%")
+    
     if unnoticed_frauds_df is not None and not unnoticed_frauds_df.empty:
         print("Using unnoticed frauds to build LLM prompt sample")
         target_rows = 10_000
-        fraud_ratio = 0.4
-        num_fraud_needed = int(target_rows * fraud_ratio)
+        num_fraud_needed = int(target_rows * dynamic_fraud_ratio)
         num_clean_needed = target_rows - num_fraud_needed
         
         try:
@@ -290,11 +293,11 @@ def run_attack_generator(unnoticed_frauds_df=None):
             print(f"Error loading clean data for sample: {e}")
             sample_df = None
     else:
-        sample_df = generator.load_and_slice_data(skip_rows=5_000_000, target_rows=10_000, fraud_ratio=0.4)
+        sample_df = generator.load_and_slice_data(skip_rows=5_000_000, target_rows=10_000, fraud_ratio=dynamic_fraud_ratio)
     
     if sample_df is not None:
         attack_params = generator.prompt_llm_architect(sample_df)
-        output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=100_000, max_fraud_ratio=0.4)
+        output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=100_000, max_fraud_ratio=dynamic_fraud_ratio)
         return output_file
     return None
 
