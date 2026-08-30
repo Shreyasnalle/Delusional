@@ -62,7 +62,11 @@ Start Simulation ➔ Red Team (generates attack) ➔ Blue Team (Multi-Hetero GNN
 
 ---
 
-## 5. Developer & Code Inspection Guide
+## 5. Photos 
+![alt text](image.png)
+![alt text](image-1.png)
+
+## 6. Developer & Code Inspection Guide
 
 ### Local Setup & Execution
 To run the full stack locally:
