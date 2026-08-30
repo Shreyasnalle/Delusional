@@ -220,8 +220,13 @@ def _get_next_model_filename(save_dir):
     return os.path.join(save_dir, f"fine_tuned_model_{max_idx + 1}.pt")
 
 def run_feedback_loop(attack_file=None, callback=None):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Feedback Loop (Active Defense) Initialized on {device}")
+    import os
+    if os.environ.get("SPACE_ID"):
+        device = torch.device("cpu")
+        print(f"Feedback Loop (Active Defense) Initialized on CPU (Hugging Face Spaces ZeroGPU limitation)")
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Feedback Loop (Active Defense) Initialized on {device}")
     
     save_dir = os.path.join(os.path.dirname(__file__), 'fine_tunning')
     os.makedirs(save_dir, exist_ok=True)

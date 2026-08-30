@@ -14,4 +14,4 @@ with demo:
     # Wire the GPU function to the load event so it's statically detected by AST scanner
     demo.load(fn=init_zero_gpu, outputs=status_text)
 
-demo = gr.mount_gradio_app(app, demo, path="/ui")
+app = gr.mount_gradio_app(app, demo, path="/")
