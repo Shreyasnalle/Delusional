@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch_geometric.data import HeteroData
 from torch_geometric.nn import GINEConv, BatchNorm, Linear, to_hetero
 
-BATCH_SIZE = 512
+BATCH_SIZE = 8192
 NUM_NEIGHBORS = 50
 N_HIDDEN = 64
 N_GNN_LAYERS = 2

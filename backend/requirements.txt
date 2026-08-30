@@ -10,3 +10,4 @@ python-dotenv
 tqdm
 kagglehub
 scikit-learn
+gradio
