@@ -58,6 +58,7 @@ export default function LandingPage() {
     afterFp: 6868,
     afterPrecision: "0.8499",
     afterRecall: "97.70%",
+    precisionPct: "84.99%",
     performancePct: "97.70%"
   });
 
@@ -146,6 +147,8 @@ export default function LandingPage() {
               const totalTx = m.total_transactions ?? (m.before ? m.before.tp + m.before.fn + m.before.tn + m.before.fp : 100000);
               const totalFraud = m.total_fraud_transactions ?? m.total_true_frauds ?? (m.before ? m.before.tp + m.before.fn : 39790);
               const totalReal = m.total_real_transactions ?? (totalTx - totalFraud);
+              const precVal = m.after?.precision ?? 0.8499;
+              const precPctStr = `${(precVal * 100).toFixed(2)}%`;
 
               setModelMetrics({
                 savePath: m.save_path || `fine_tuned_model_${modelCount}.pt`,
@@ -166,8 +169,9 @@ export default function LandingPage() {
                 afterFn: m.after?.fn ?? 916,
                 afterTn: m.after?.tn ?? 53342,
                 afterFp: m.after?.fp ?? 6868,
-                afterPrecision: (m.after?.precision ?? 0.8499).toFixed(4),
+                afterPrecision: precVal.toFixed(4),
                 afterRecall: m.after?.rate_str || "97.70%",
+                precisionPct: precPctStr,
                 performancePct: m.performance_pct || "97.70%"
               });
             }
@@ -283,12 +287,29 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Bottom Footer: Performance % */}
-            <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-300">
+            {/* Bottom Footer: Precision % with Hover Card Tooltip */}
+            <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-300 relative">
               <span className="text-slate-400 uppercase tracking-wider">Status</span>
-              <span className="font-mono text-sky-300 font-bold uppercase tracking-wider">
-                Performance: <strong className="text-emerald-400">{hasRun ? modelMetrics.performancePct : "--%"}</strong>
-              </span>
+              
+              <div className="group/precision relative flex items-center gap-1.5 cursor-help">
+                <span className="font-mono text-sky-300 font-bold uppercase tracking-wider">
+                  Precision: <strong className="text-emerald-400">{hasRun ? modelMetrics.precisionPct : "--%"}</strong>
+                </span>
+                <span className="text-[10px] font-bold text-sky-300/80 bg-sky-500/20 border border-sky-400/40 rounded-full w-4 h-4 flex items-center justify-center">
+                  ?
+                </span>
+
+                {/* Precision Hover Tooltip Card */}
+                <div className="absolute right-0 bottom-full mb-2 hidden group-hover/precision:flex flex-col w-72 p-3.5 rounded-xl bg-[#081021] border border-sky-400/60 shadow-[0_10px_35px_rgba(0,0,0,0.95)] text-xs z-[100] animate-fade-in backdrop-blur-2xl">
+                  <div className="flex items-center justify-between mb-1.5 border-b border-slate-700/80 pb-1.5">
+                    <span className="font-bold text-sky-300 uppercase tracking-wider text-xs">WHAT IS PRECISION?</span>
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">ALERT ACCURACY</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-slate-100 normal-case font-normal">
+                    When the GNN flags a transaction as fraud, this represents the exact percentage that are actual fraud vs false alarms on clean customers.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
