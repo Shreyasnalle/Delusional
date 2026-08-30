@@ -1,5 +1,5 @@
 fastapi
-uvicorn[standard]
+uvicorn
 torch
 torch-geometric
 groq
@@ -7,3 +7,4 @@ pandas
 numpy
 python-dotenv
 tqdm
+kagglehub

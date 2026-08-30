@@ -26,14 +26,12 @@ async def generate_pipeline_events():
     def send_event(data_dict):
         return f"data: {json.dumps(data_dict)}\n\n"
 
-    # Step 1: Attack Generation Start
     yield send_event({
         "step": "attacking",
         "message": "Generating adversarial dataset"
     })
     await asyncio.sleep(0.5)
 
-    # Check for unnoticed frauds
     unnoticed_frauds_path = os.path.join(os.path.dirname(__file__), 'attacks', 'unnoticed_frauds.csv')
     unnoticed_df = None
     if os.path.exists(unnoticed_frauds_path):
@@ -42,14 +40,11 @@ async def generate_pipeline_events():
         except Exception as e:
             print(f"[PIPELINE ERROR] Failed to load unnoticed frauds dataset: {e}")
 
-    # Run Attack Generator in thread pool so it doesn't block async loop
     attack_file = await asyncio.to_thread(run_attack_generator, unnoticed_df)
 
     if not attack_file or not os.path.exists(attack_file):
-        # Fallback if raw dataset is not cached in local env
         attack_file = os.path.join(os.path.dirname(__file__), 'attacks', 'attack_1.csv')
 
-    # Read attack file metrics for Card 2
     total_tx = 100000
     total_frauds = 39790
     total_normal = 60210
@@ -69,7 +64,6 @@ async def generate_pipeline_events():
         except Exception as e:
             print(f"[PIPELINE ERROR] Failed to read attack CSV: {e}")
 
-    # Step 2: Attack Complete -> Update Card 2
     yield send_event({
         "step": "attack_complete",
         "message": "Attack dataset generated successfully",
@@ -80,20 +74,17 @@ async def generate_pipeline_events():
     })
     await asyncio.sleep(0.5)
 
-    # Step 3: Defense Evaluation Start -> Update Card 3 to Defending...
     yield send_event({
         "step": "defending",
         "message": "Evaluating active defense model"
     })
     await asyncio.sleep(0.5)
 
-    # Queue for inter-thread step messages from run_feedback_loop
     event_queue = asyncio.Queue()
 
     def feedback_callback(evt):
         event_queue.put_nowait(evt)
 
-    # Run feedback loop in background thread
     task = asyncio.create_task(asyncio.to_thread(run_feedback_loop, attack_file, feedback_callback))
 
     while not task.done() or not event_queue.empty():
@@ -103,7 +94,6 @@ async def generate_pipeline_events():
         except asyncio.TimeoutError:
             continue
 
-    # Ensure final completed event is sent
     try:
         _, metrics_report = task.result()
         yield send_event({
@@ -113,7 +103,6 @@ async def generate_pipeline_events():
         })
     except Exception as e:
         print(f"[PIPELINE ERROR] Feedback loop exception: {e}")
-        # Standard fallback report if dataset loading was partial
         yield send_event({
             "step": "complete",
             "message": "Fine-tuning complete",

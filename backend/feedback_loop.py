@@ -251,7 +251,6 @@ def run_feedback_loop(attack_file=None, callback=None):
     
     model_paths = ['model/best_model.pt', '../model/best_model.pt', 'best_model.pt']
     
-    # Try finding the latest fine-tuned model first, then fall back to the base model
     finetuned_files = sorted(glob.glob(os.path.join(save_dir, 'fine_tuned_model_*.pt')))
     if finetuned_files:
         model_load_path = finetuned_files[-1]

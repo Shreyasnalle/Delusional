@@ -255,7 +255,7 @@ def main():
     recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
     
     print("\n" + "="*50)
-    print("🛡️ BLUE TEAM DEFENSE REPORT 🛡️")
+    print("BLUE TEAM DEFENSE REPORT")
     print("="*50)
     print(f"Total number of transactions           : {total_transactions:,}")
     print(f"Total true frauds before preprocessing : {total_frauds_before:,}")
