@@ -315,11 +315,23 @@ def run_attack_generator(unnoticed_frauds_df=None):
     else:
         sample_df = generator.load_and_slice_data(skip_rows=5_000_000, target_rows=10_000, fraud_ratio=dynamic_fraud_ratio)
     
-    if sample_df is not None:
-        attack_params = generator.prompt_llm_architect(sample_df)
-        output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=100_000, max_fraud_ratio=dynamic_fraud_ratio)
-        return output_file
-    return None
+    if sample_df is None:
+        print("Using dummy base data since source dataset is missing.")
+        sample_df = pd.DataFrame({
+            'Account': [f"ACC_{i}" for i in range(100)],
+            'Account.1': [f"ACC_{i}" for i in range(100, 200)],
+            'Amount Received': [1000.0] * 100,
+            'Receiving Currency': ['USD'] * 100,
+            'Amount Paid': [1000.0] * 100,
+            'Payment Currency': ['USD'] * 100,
+            'Payment Format': ['Wire'] * 100,
+            'Is Laundering': [0] * 100
+        })
+
+    attack_params = generator.prompt_llm_architect(sample_df)
+    # Reduce rows from 100k to 15k to prevent OOM (Status 137) on Render Free Tier
+    output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=15000, max_fraud_ratio=dynamic_fraud_ratio)
+    return output_file
 
 if __name__ == "__main__":
     run_attack_generator()
