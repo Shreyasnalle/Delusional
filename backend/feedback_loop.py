@@ -17,7 +17,6 @@ N_GNN_LAYERS = 2
 EPOCHS = 3
 LEARNING_RATE = 5e-4
 
-# --- Model Definition ---
 class GINe(torch.nn.Module):
     def __init__(self, num_features, num_gnn_layers, n_classes=2, n_hidden=100, edge_updates=False, edge_dim=None, dropout=0.0, final_dropout=0.5):
         super().__init__()
@@ -50,7 +49,6 @@ class GINe(torch.nn.Module):
         x = torch.cat((x, edge_attr.view(-1, edge_attr.shape[1])), dim=1)
         return self.mlp(x)
 
-# --- Data Loader ---
 class HeteroEdgeLoader:
     def __init__(self, data, edge_inds, batch_size, shuffle=False, num_neighbors=50, add_ego_ids=True):
         self.data = data
@@ -129,7 +127,6 @@ class HeteroEdgeLoader:
             chunk = self.edge_inds[order[start:start + self.batch_size]]
             yield self._make_batch(chunk)
 
-# --- Feature Engineering ---
 def encode_shared(df, cols):
     shared = {}
     for col in cols:
@@ -210,32 +207,41 @@ def evaluate_model(model, loader, device, y_true):
     
     return y_pred, tp, fp, tn, fn, precision, recall
 
-def main():
+def _get_next_model_filename(save_dir):
+    existing_files = glob.glob(os.path.join(save_dir, "fine_tuned_model_*.pt"))
+    max_idx = 0
+    for f in existing_files:
+        try:
+            idx = int(os.path.basename(f).split('_')[-1].split('.')[0])
+            max_idx = max(max_idx, idx)
+        except ValueError:
+            continue
+    return os.path.join(save_dir, f"fine_tuned_model_{max_idx + 1}.pt")
+
+def run_feedback_loop(attack_file=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Feedback Loop (Active Defense) Initialized on {device}")
     
-    # Ensure fine-tuning folder exists
     save_dir = os.path.join(os.path.dirname(__file__), 'fine_tunning')
     os.makedirs(save_dir, exist_ok=True)
     
-    # Locate attack file
-    attack_files = sorted(glob.glob('backend/attacks/attack_*.csv')) or sorted(glob.glob('attacks/attack_*.csv'))
-    if not attack_files:
-        raise FileNotFoundError("No attack CSV files found!")
+    if attack_file is None:
+        attack_files = sorted(glob.glob('backend/attacks/attack_*.csv')) or sorted(glob.glob('attacks/attack_*.csv'))
+        if not attack_files:
+            raise FileNotFoundError("No attack CSV files found")
+        attack_file = attack_files[-1]
+        
+    print(f"Loading incoming adversarial attack: {attack_file}")
     
-    latest_attack_file = attack_files[-1]
-    print(f"Loading incoming adversarial attack: {latest_attack_file}")
-    
-    df = pd.read_csv(latest_attack_file)
+    raw_df = pd.read_csv(attack_file)
+    df = raw_df.copy()
     y_true = df['Is Laundering'].values
     total_transactions = len(df)
     
-    # Process graph
     hetero_data = build_hetero_data(df.drop(columns=['Is Laundering']))
     all_inds = torch.arange(total_transactions)
     eval_loader = HeteroEdgeLoader(hetero_data, all_inds, BATCH_SIZE, shuffle=False, num_neighbors=NUM_NEIGHBORS, add_ego_ids=True)
     
-    # Init Model
     sample_batch = next(iter(eval_loader))
     EDGE_DIM = sample_batch['node', 'to', 'node'].edge_attr.shape[1] - 1
     NUM_FEATURES = sample_batch['node'].x.shape[1]
@@ -244,43 +250,56 @@ def main():
     model = to_hetero(base_model, hetero_data.metadata(), aggr='mean').to(device)
     
     model_paths = ['model/best_model.pt', '../model/best_model.pt', 'best_model.pt']
-    model_load_path = next((p for p in model_paths if os.path.exists(p)), None)
+    
+    # Try finding the latest fine-tuned model first, then fall back to the base model
+    finetuned_files = sorted(glob.glob(os.path.join(save_dir, 'fine_tuned_model_*.pt')))
+    if finetuned_files:
+        model_load_path = finetuned_files[-1]
+    else:
+        model_load_path = next((p for p in model_paths if os.path.exists(p)), None)
     
     if model_load_path:
         print(f"Loading initial model weights from: {model_load_path}")
         model.load_state_dict(torch.load(model_load_path, map_location=device, weights_only=True))
     
-    # --- PHASE 1: Baseline Evaluation ---
-    print("\n[Phase 1] Evaluating Baseline Defense...")
+    print("\n[Phase 1] Evaluating Baseline Defense")
     y_pred_base, tp1, fp1, tn1, fn1, p1, r1 = evaluate_model(model, eval_loader, device, y_true)
     
-    # --- PHASE 2: Construct Fine-Tuning Dataset ---
-    print("\n[Phase 2] Constructing Fine-Tuning Dataset...")
-    fn_idx = np.where((y_pred_base == 0) & (y_true == 1))[0] # Missed frauds
-    fp_idx = np.where((y_pred_base == 1) & (y_true == 0))[0] # False alarms
-    tp_idx = np.where((y_pred_base == 1) & (y_true == 1))[0] # Correctly caught
-    tn_idx = np.where((y_pred_base == 0) & (y_true == 0))[0] # Correctly ignored
+    print("\n[Phase 2] Constructing Fine-Tuning Dataset")
+    fn_idx = np.where((y_pred_base == 0) & (y_true == 1))[0]
+    fp_idx = np.where((y_pred_base == 1) & (y_true == 0))[0]
+    tp_idx = np.where((y_pred_base == 1) & (y_true == 1))[0]
+    tn_idx = np.where((y_pred_base == 0) & (y_true == 0))[0]
     
-    # Balance the training set: Take ALL hard examples (FN and FP), and a balanced sample of Easy examples
     np.random.shuffle(tp_idx)
     np.random.shuffle(tn_idx)
     
     target_count = min(10000, len(fn_idx), len(fp_idx))
     
-    train_idx = np.concatenate([
-        fn_idx[:target_count*2],     # Heavy focus on missed frauds
-        fp_idx[:target_count],       # False alarms
-        tp_idx[:target_count],       # Retain learned frauds
-        tn_idx[:target_count*2]      # Background clean data
-    ])
+    # If the model is already perfect (or close to it) and has zero/too few hard examples, we still need to train 
+    # to avoid errors, or we can just skip training. Let's ensure a minimum batch by using TP/TN if FN/FP are empty.
+    if target_count == 0:
+        print("Model is highly accurate on this dataset; no hard examples found. Fine-tuning will use standard sampling.")
+        target_count = 1000
+        train_idx = np.concatenate([
+            tp_idx[:target_count],
+            tn_idx[:target_count]
+        ])
+    else:
+        train_idx = np.concatenate([
+            fn_idx[:target_count*2],
+            fp_idx[:target_count],
+            tp_idx[:target_count],
+            tn_idx[:target_count*2]
+        ])
+        
     np.random.shuffle(train_idx)
     train_inds = torch.tensor(train_idx, dtype=torch.long)
-    print(f"Fine-tuning dataset created with {len(train_inds)} hard/balanced instances.")
+    print(f"Fine-tuning dataset created with {len(train_inds)} hard/balanced instances")
     
     train_loader = HeteroEdgeLoader(hetero_data, train_inds, BATCH_SIZE // 4, shuffle=True, num_neighbors=NUM_NEIGHBORS, add_ego_ids=True)
     
-    # --- PHASE 3: Fine-Tuning ---
-    print(f"\n[Phase 3] Fine-Tuning Model for {EPOCHS} Epochs (Learning Rate: {LEARNING_RATE})...")
+    print(f"\n[Phase 3] Fine-Tuning Model for {EPOCHS} Epochs (Learning Rate: {LEARNING_RATE})")
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
     model.train()
     
@@ -292,10 +311,8 @@ def main():
             batch_edge_ids = batch['node', 'to', 'node'].edge_attr[:, 0].cpu()
             seed_ids_cpu = batch._seed_ids.cpu().long()
             
-            # Extract ground truth for these exact seed edges
             seed_y = torch.tensor(y_true[seed_ids_cpu.numpy()], dtype=torch.long).to(device)
             
-            # Strip IDs
             batch['node', 'to', 'node'].edge_attr = batch['node', 'to', 'node'].edge_attr[:, 1:]
             batch['node', 'rev_to', 'node'].edge_attr = batch['node', 'rev_to', 'node'].edge_attr[:, 1:]
             batch = batch.to(device)
@@ -313,7 +330,6 @@ def main():
             indices = torch.tensor(indices, dtype=torch.long, device=device)
             seed_logits = subgraph_out[indices]
             
-            # Weighted loss to heavily penalize missing frauds
             weights = torch.tensor([1.0, 3.0], device=device)
             loss = F.cross_entropy(seed_logits, seed_y, weight=weights)
             
@@ -323,24 +339,21 @@ def main():
             
         print(f"Epoch {epoch} Average Loss: {total_loss / len(train_loader):.4f}")
     
-    # Save Fine-Tuned Model
-    save_path = os.path.join(save_dir, 'fine_tuned_model.pt')
+    save_path = _get_next_model_filename(save_dir)
     torch.save(model.state_dict(), save_path)
-    print(f"✅ Fine-Tuned Model saved to {save_path}")
+    print(f"Fine-Tuned Model saved to {save_path}")
     
-    # --- PHASE 4: Post-Tuning Evaluation ---
-    print("\n[Phase 4] Evaluating Fine-Tuned Defense on the entire attack dataset...")
-    _, tp2, fp2, tn2, fn2, p2, r2 = evaluate_model(model, eval_loader, device, y_true)
+    print("\n[Phase 4] Evaluating Fine-Tuned Defense on the entire attack dataset")
+    y_pred_tuned, tp2, fp2, tn2, fn2, p2, r2 = evaluate_model(model, eval_loader, device, y_true)
     
-    # --- PHASE 5: Comparative Report ---
     print("\n" + "="*60)
-    print("🛡️ BLUE TEAM DEFENSE COMPARISON REPORT 🛡️")
+    print("BLUE TEAM DEFENSE COMPARISON REPORT")
     print("="*60)
     print(f"{'Metric':<30} | {'Before Fine-Tuning':<18} | {'After Fine-Tuning'}")
     print("-" * 60)
-    print(f"{'Total True Frauds':<30} | {fn1+tp1:<18,} | {fn2+tp2:,}")
-    print(f"{'Frauds Detected (TP)':<30} | {tp1:<18,} | {tp2:,} (▲ {tp2-tp1:,})")
-    print(f"{'Missed Frauds (FN)':<30} | {fn1:<18,} | {fn2:,} (▼ {fn1-fn2:,})")
+    print(f"Total True Frauds              | {fn1+tp1:<18,} | {fn2+tp2:,}")
+    print(f"Frauds Detected (TP)           | {tp1:<18,} | {tp2:,} (+ {tp2-tp1:,})")
+    print(f"Missed Frauds (FN)             | {fn1:<18,} | {fn2:,} (- {fn1-fn2:,})")
     print(f"{'Real Trans Passed (TN)':<30} | {tn1:<18,} | {tn2:,}")
     print(f"{'False Positives (FP)':<30} | {fp1:<18,} | {fp2:,}")
     print("-" * 60)
@@ -348,5 +361,15 @@ def main():
     print(f"{'Recall (Fraud Catch Rate)':<30} | {r1:<18.4f} | {r2:.4f}")
     print("="*60)
     
+    # Extract the unnoticed frauds from the RAW dataframe
+    missed_idx = np.where((y_pred_tuned == 0) & (y_true == 1))[0]
+    unnoticed_frauds_df = raw_df.iloc[missed_idx].copy()
+    
+    unnoticed_path = os.path.join(os.path.dirname(__file__), 'attacks', 'unnoticed_frauds.csv')
+    unnoticed_frauds_df.to_csv(unnoticed_path, index=False)
+    print(f"Extracted {len(unnoticed_frauds_df)} unnoticed frauds and saved to {unnoticed_path} for the next attack iteration.")
+    
+    return unnoticed_frauds_df
+
 if __name__ == "__main__":
-    main()
+    run_feedback_loop()

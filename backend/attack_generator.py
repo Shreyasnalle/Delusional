@@ -6,13 +6,12 @@ import pandas as pd
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 try:
     from groq import Groq
 except ImportError:
-    print("Warning: groq library not installed. Please run `pip install groq`.")
+    print("Warning: groq library not installed")
 
 class AttackGenerator:
     def __init__(self, raw_data_path, output_dir=None):
@@ -28,10 +27,9 @@ class AttackGenerator:
             except Exception as e:
                 print(f"Error initializing Groq client: {e}")
         else:
-            print("Warning: GROQ_API_KEY not found in environment.")
+            print("Warning: GROQ_API_KEY not found in environment")
 
     def _get_next_filename(self):
-        """Finds the next attack_N.csv filename."""
         existing_files = glob.glob(os.path.join(self.output_dir, "attack_*.csv"))
         max_idx = 0
         for f in existing_files:
@@ -43,16 +41,13 @@ class AttackGenerator:
         return os.path.join(self.output_dir, f"attack_{max_idx + 1}.csv")
 
     def load_and_slice_data(self, skip_rows=5_000_000, target_rows=10_000, fraud_ratio=0.4):
-        """
-        Loads a slice of the dataset ensuring max 40% fraud, leaving the rest as real background noise.
-        """
-        print(f"Loading data from {self.raw_data_path} (skipping first {skip_rows:,} rows)...")
+        print(f"Loading data from {self.raw_data_path}")
         try:
             chunk_size = 500_000
             df = pd.read_csv(self.raw_data_path, skiprows=range(1, skip_rows), nrows=chunk_size)
             
             if 'Is Laundering' not in df.columns:
-                print("Error: 'Is Laundering' column not found in dataset.")
+                print("Error: 'Is Laundering' column not found in dataset")
                 return None
 
             fraud_df = df[df['Is Laundering'] == 1]
@@ -69,7 +64,7 @@ class AttackGenerator:
             sampled_clean = clean_df.sample(n=num_clean_needed, replace=True)
 
             sampled_df = pd.concat([sampled_clean, sampled_fraud]).sample(frac=1).reset_index(drop=True)
-            print(f"Sampled {len(sampled_df)} rows as baseline. Fraud: {len(sampled_fraud)} ({len(sampled_fraud)/len(sampled_df):.1%}), Clean: {len(sampled_clean)}")
+            print(f"Sampled {len(sampled_df)} rows as baseline")
             return sampled_df
 
         except Exception as e:
@@ -77,11 +72,8 @@ class AttackGenerator:
             return None
 
     def prompt_llm_architect(self, sample_data):
-        """
-        Feeds a JSON sample to the LLM (Groq API) to orchestrate advanced attack vectors.
-        """
         if not self.client:
-            print("No Groq API key found. Using default procedural parameters.")
+            print("No Groq API key found. Using default procedural parameters")
             return self._default_attack_params()
 
         essential_cols = ['Timestamp', 'Account', 'Account.1', 'Amount Received', 'Payment Format', 'Is Laundering']
@@ -119,7 +111,7 @@ The structure MUST match this exactly:
 """
         user_prompt = f"Here is the sample of the target transaction network. Design the attack parameters based on this data format:\n{sample_json}"
         
-        print("Querying Groq (openai/gpt-oss-20b) Architect for highly evasive attack parameters...")
+        print("Querying Groq LLM Architect for evasive attack parameters")
         try:
             chat_completion = self.client.chat.completions.create(
                 messages=[
@@ -137,14 +129,13 @@ The structure MUST match this exactly:
             )
             response_text = chat_completion.choices[0].message.content
             import re
-            # Strip <think> reasoning blocks if model output included them
             clean_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
             clean_text = clean_text.replace("```json", "").replace("```", "").strip()
             params = json.loads(clean_text)
-            print("Groq LLM Evasive Parameters received successfully.")
+            print("LLM Evasive Parameters received successfully")
             return params
         except Exception as e:
-            print(f"Groq API Error: {e}. Falling back to default parameters.")
+            print(f"Groq API Error: {e}. Falling back to default parameters")
             return self._default_attack_params()
 
     def _default_attack_params(self):
@@ -154,12 +145,8 @@ The structure MUST match this exactly:
             "evasion": {"noise_ratio": 0.15, "noise_amount_range": [5, 200]}
         }
 
-    def generate_attacks(self, base_df, params, total_target_rows=100_000, max_fraud_ratio=0.4):
-        """
-        Procedural engine that scales the LLM's attack parameters to exactly 100,000 transactions.
-        Forces the generated dataset to never exceed the max_fraud_ratio.
-        """
-        print(f"Scaling evasive attacks to {total_target_rows:,} transactions (Max Fraud limit: {max_fraud_ratio:.1%})...")
+    def generate_attacks(self, base_df, params, total_target_rows=100_000, max_fraud_ratio=0.4, unnoticed_frauds_df=None):
+        print(f"Scaling evasive attacks to {total_target_rows:,} transactions (Max Fraud limit: {max_fraud_ratio:.1%})")
         
         accounts = list(set(base_df['Account'].tolist() + base_df['Account.1'].tolist())) if 'Account' in base_df.columns else [f"ACC_{i}" for i in range(10000)]
         currencies = base_df['Receiving Currency'].unique().tolist() if 'Receiving Currency' in base_df.columns else ["USD", "EUR", "GBP"]
@@ -171,7 +158,6 @@ The structure MUST match this exactly:
         target_fraud_rows = int(total_target_rows * max_fraud_ratio)
         current_fraud_count = 0
         
-        # --- Strategy 1: Mule Bootstrapping ---
         mule_p = params.get("mule_network", {})
         num_hubs = mule_p.get("num_hubs", 20)
         
@@ -198,13 +184,11 @@ The structure MUST match this exactly:
                 ))
                 current_fraud_count += 1
                 
-        # --- Strategy 2: Smurfing / Micro-Splitting ---
         smurf_p = params.get("smurfing", {})
         amount_range = smurf_p.get("target_amount_range", [100000, 500000])
         split_range = smurf_p.get("split_count_range", [20, 60])
         max_micro = smurf_p.get("max_micro_amount", 9500)
         
-        # Distribute the remaining fraud quota into smurfing clusters
         num_smurf_attacks = (target_fraud_rows - current_fraud_count) // max(1, (split_range[0] + split_range[1]) // 2)
         
         for _ in range(max(1, num_smurf_attacks)):
@@ -217,7 +201,7 @@ The structure MUST match this exactly:
             
             for _ in range(num_splits):
                 if current_fraud_count >= target_fraud_rows: break
-                micro_amount = min(target_amount / num_splits, max_micro) * random.uniform(0.85, 0.99) # Sub-threshold jitter
+                micro_amount = min(target_amount / num_splits, max_micro) * random.uniform(0.85, 0.99)
                 base_time += timedelta(seconds=random.randint(1, 45))
                 
                 generated_rows.append(self._create_row(
@@ -228,20 +212,17 @@ The structure MUST match this exactly:
                 ))
                 current_fraud_count += 1
 
-        # --- Strategy 3: Real Background & Evasion Perturbation ---
         evasion_p = params.get("evasion", {})
         noise_amount_range = evasion_p.get("noise_amount_range", [10, 500])
         noise_ratio = evasion_p.get("noise_ratio", 0.2)
         
         clean_rows_needed = total_target_rows - len(generated_rows)
-        print(f"Injecting {clean_rows_needed:,} real/noise transactions to mask fraud...")
+        print(f"Injecting {clean_rows_needed:,} real/noise transactions to mask fraud")
         
         for _ in range(clean_rows_needed):
             base_time += timedelta(seconds=random.randint(1, 100))
             is_noise = random.random() < noise_ratio
             
-            # If it's an evasion noise transaction, use tiny amounts
-            # If it's standard real background, use a wider random distribution
             amount = random.uniform(noise_amount_range[0], max(noise_amount_range[0], noise_amount_range[1])) if is_noise else random.uniform(10, 8000)
             
             generated_rows.append(self._create_row(
@@ -251,7 +232,6 @@ The structure MUST match this exactly:
                 is_laundering=0
             ))
             
-        # Randomly shuffle everything to break sequential blocks and scatter the fraud
         random.shuffle(generated_rows)
         final_df = pd.DataFrame(generated_rows)
         
@@ -260,12 +240,12 @@ The structure MUST match this exactly:
         
         actual_fraud = final_df['Is Laundering'].sum()
         actual_clean = len(final_df) - actual_fraud
-        print(f"\n✅ Attack Generator Complete!")
+        print("Attack Generator Complete")
         print(f"Output File: {output_file}")
         print(f"Total Rows : {len(final_df):,}")
         print(f"Distribution -> Fraud: {actual_fraud:,} ({actual_fraud/len(final_df):.1%}), Clean: {actual_clean:,} ({actual_clean/len(final_df):.1%})")
         
-        return final_df
+        return output_file
 
     def _create_row(self, timestamp, from_acc, to_acc, amount, currency, p_format, is_laundering):
         return {
@@ -282,20 +262,41 @@ The structure MUST match this exactly:
             "Is Laundering": is_laundering
         }
 
-if __name__ == "__main__":
-    # Check Kaggle cache first, fallback to local model directory
+def run_attack_generator(unnoticed_frauds_df=None):
     RAW_CSV_PATH = os.path.expanduser("~/.cache/kagglehub/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml/versions/8/HI-Large_Trans.csv")
     if not os.path.exists(RAW_CSV_PATH):
         RAW_CSV_PATH = "/home/shreyas-nalle/Desktop/Delusional/model/formatted_transactions.csv"
         
     generator = AttackGenerator(raw_data_path=RAW_CSV_PATH)
     
-    # 1. Load baseline (slice 5M+, get 10k sample of <= 40% fraud)
-    sample_df = generator.load_and_slice_data(skip_rows=5_000_000, target_rows=10_000, fraud_ratio=0.4)
+    if unnoticed_frauds_df is not None and not unnoticed_frauds_df.empty:
+        print("Using unnoticed frauds to build LLM prompt sample")
+        target_rows = 10_000
+        fraud_ratio = 0.4
+        num_fraud_needed = int(target_rows * fraud_ratio)
+        num_clean_needed = target_rows - num_fraud_needed
+        
+        try:
+            chunk_size = 500_000
+            raw_df_chunk = pd.read_csv(RAW_CSV_PATH, skiprows=range(1, 5_000_000), nrows=chunk_size)
+            if 'Is Laundering' in raw_df_chunk.columns:
+                clean_df = raw_df_chunk[raw_df_chunk['Is Laundering'] == 0]
+                sampled_fraud = unnoticed_frauds_df.sample(n=num_fraud_needed, replace=True)
+                sampled_clean = clean_df.sample(n=num_clean_needed, replace=True)
+                sample_df = pd.concat([sampled_clean, sampled_fraud]).sample(frac=1).reset_index(drop=True)
+            else:
+                sample_df = None
+        except Exception as e:
+            print(f"Error loading clean data for sample: {e}")
+            sample_df = None
+    else:
+        sample_df = generator.load_and_slice_data(skip_rows=5_000_000, target_rows=10_000, fraud_ratio=0.4)
     
     if sample_df is not None:
-        # 2. Get LLM Architect Parameters
         attack_params = generator.prompt_llm_architect(sample_df)
-        
-        # 3. Procedurally scale to exactly 100k
-        generator.generate_attacks(sample_df, attack_params, total_target_rows=100_000, max_fraud_ratio=0.4)
+        output_file = generator.generate_attacks(sample_df, attack_params, total_target_rows=100_000, max_fraud_ratio=0.4)
+        return output_file
+    return None
+
+if __name__ == "__main__":
+    run_attack_generator()

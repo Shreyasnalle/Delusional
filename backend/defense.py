@@ -1,6 +1,5 @@
 import os
 import glob
-# pyrefly: ignore [missing-import]
 import torch
 import pandas as pd
 import numpy as np
@@ -16,7 +15,6 @@ NUM_NEIGHBORS = 50
 N_HIDDEN = 64
 N_GNN_LAYERS = 2
 
-# --- Model Definition ---
 class GINe(torch.nn.Module):
     def __init__(self, num_features, num_gnn_layers, n_classes=2, n_hidden=100, edge_updates=False, edge_dim=None, dropout=0.0, final_dropout=0.5):
         super().__init__()
@@ -49,7 +47,6 @@ class GINe(torch.nn.Module):
         x = torch.cat((x, edge_attr.view(-1, edge_attr.shape[1])), dim=1)
         return self.mlp(x)
 
-# --- Data Loader ---
 class HeteroEdgeLoader:
     def __init__(self, data, edge_inds, batch_size, shuffle=False, num_neighbors=50, add_ego_ids=True):
         self.data = data
@@ -128,7 +125,6 @@ class HeteroEdgeLoader:
             chunk = self.edge_inds[order[start:start + self.batch_size]]
             yield self._make_batch(chunk)
 
-# --- Feature Engineering ---
 def encode_shared(df, cols):
     shared = {}
     for col in cols:
@@ -139,19 +135,15 @@ def encode_shared(df, cols):
     return df
 
 def build_hetero_data(df):
-    print("Building Graph Features (Ports & Time-Deltas)...")
+    print("Building Graph Features")
     
-    # Map accounts to node IDs
     nodes = list(set(df['Account'].tolist() + df['Account.1'].tolist()))
     node_map = {acc: i for i, acc in enumerate(nodes)}
     
-    # 1. Edge Index
     src = torch.tensor(df['Account'].map(node_map).values, dtype=torch.long)
     dst = torch.tensor(df['Account.1'].map(node_map).values, dtype=torch.long)
     edge_index = torch.stack([src, dst], dim=0)
     
-    # 2. Base Edge Attributes — MUST match the 4 features the saved best_model.pt was trained on:
-    # ["Amount Received", "Receiving Currency", "Amount Paid", "Payment Format"]
     df = encode_shared(df, ['Receiving Currency', 'Payment Currency'])
     df['Payment Format'] = pd.factorize(df['Payment Format'])[0]
     
@@ -160,30 +152,24 @@ def build_hetero_data(df):
         dtype=torch.float
     )
     
-    # Z-Score Normalize Edge Attributes
     mean = base_attr.mean(dim=0, keepdim=True)
     std  = base_attr.std(dim=0, keepdim=True)
     std[std == 0] = 1.0
     edge_attr = (base_attr - mean) / std
     
-    # Add Edge IDs (arange) for the loader
     ids = torch.arange(len(df)).view(-1, 1).float()
     edge_attr_w_id = torch.cat([ids, edge_attr], dim=1)
     
-    # 5. Build Node Features (All ones as in the paper)
     x = torch.ones((len(nodes), 1), dtype=torch.float)
     
-    # 6. Build HeteroData
     h = HeteroData()
     h['node'].x = x
     h['node', 'to', 'node'].edge_index = edge_index
     h['node', 'rev_to', 'node'].edge_index = edge_index.flipud()
     h['node', 'to', 'node'].edge_attr = edge_attr_w_id
     
-    # Rev_to edge attr (swap in/out ports and TDs)
     rev_attr = edge_attr_w_id.clone()
     if rev_attr.shape[1] >= 9:
-        # Ports are index 6, 7 (after id at 0). TDs are 8, 9
         rev_attr[:, [6, 7]] = rev_attr[:, [7, 6]]
         rev_attr[:, [8, 9]] = rev_attr[:, [9, 8]]
     h['node', 'rev_to', 'node'].edge_attr = rev_attr
@@ -194,7 +180,6 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Blue Team Engine (Defense) Initialized on {device}")
     
-    # 1. Locate the latest attack file
     attack_files = sorted(glob.glob('backend/attacks/attack_*.csv'))
     if not attack_files:
         attack_files = sorted(glob.glob('attacks/attack_*.csv'))
@@ -207,7 +192,6 @@ def main():
     df = pd.read_csv(latest_attack_file)
     total_transactions = len(df)
     
-    # 2. Extract Ground Truth safely (Hide it from the model!)
     if 'Is Laundering' not in df.columns:
         raise ValueError("'Is Laundering' column is missing from the attack data.")
     
@@ -215,17 +199,11 @@ def main():
     total_frauds_before = int(np.sum(y_true))
     total_real_before = total_transactions - total_frauds_before
     
-    # Completely remove the answer key from the dataframe before processing
     df = df.drop(columns=['Is Laundering'])
-    
-    # 3. Preprocess and Build Graph
     hetero_data = build_hetero_data(df)
-    
-    # 4. Initialize Loader
     all_inds = torch.arange(total_transactions)
     loader = HeteroEdgeLoader(hetero_data, all_inds, BATCH_SIZE, shuffle=False, num_neighbors=NUM_NEIGHBORS, add_ego_ids=True)
     
-    # 5. Initialize and Load Model
     sample_batch = next(iter(loader))
     EDGE_DIM = sample_batch['node', 'to', 'node'].edge_attr.shape[1] - 1
     NUM_FEATURES = sample_batch['node'].x.shape[1]
@@ -233,7 +211,6 @@ def main():
     base_model = GINe(num_features=NUM_FEATURES, num_gnn_layers=N_GNN_LAYERS, n_classes=2, n_hidden=N_HIDDEN, edge_updates=True, edge_dim=EDGE_DIM, dropout=0.0, final_dropout=0.105)
     model = to_hetero(base_model, hetero_data.metadata(), aggr='mean').to(device)
     
-    # Try finding best_model.pt
     model_paths = ['model/best_model.pt', '../model/best_model.pt', 'best_model.pt', '/kaggle/working/best_model.pt']
     model_load_path = next((p for p in model_paths if os.path.exists(p)), None)
     
@@ -244,48 +221,31 @@ def main():
     model.load_state_dict(torch.load(model_load_path, map_location=device, weights_only=True))
     model.eval()
     
-    # 6. Run Inference
     preds = []
-    print("Defending against attack (Running Inference)...")
+    print("Defending against attack (Running Inference)")
     with torch.no_grad():
         for batch in tqdm.tqdm(loader, desc="Detecting"):
             seed_ids = batch._seed_ids
-            # Extract edge IDs for the seed edges
             batch_edge_ids = batch['node', 'to', 'node'].edge_attr[:, 0].cpu()
             
-            # Strip IDs before passing to model
             batch['node', 'to', 'node'].edge_attr = batch['node', 'to', 'node'].edge_attr[:, 1:]
             batch['node', 'rev_to', 'node'].edge_attr = batch['node', 'rev_to', 'node'].edge_attr[:, 1:]
             
             batch = batch.to(device)
             out_dict = model(batch.x_dict, batch.edge_index_dict, batch.edge_attr_dict)
             
-            # Map predictions explicitly by seed_id order
             subgraph_edge_ids = batch_edge_ids.to(device)
             subgraph_out = out_dict[('node', 'to', 'node')]
             
-            # Find the position of each seed_id in the subgraph edges
             for s_id in seed_ids:
                 idx = (subgraph_edge_ids == s_id).nonzero(as_tuple=True)[0]
                 if len(idx) > 0:
                     prob = torch.softmax(subgraph_out[idx[0]], dim=-1)[1].item()
                     preds.append((int(s_id.item()), 1 if prob >= 0.5 else 0))
                     
-    # Sort predictions strictly by original row index (0 to N-1)
     preds.sort(key=lambda x: x[0])
     y_pred = np.array([p[1] for p in preds])
     
-    # The DataLoader iterates through `all_inds` sequentially because shuffle=False, 
-    # but the HeteroData subgraph might slightly shuffle the mask order. 
-    # To be perfectly safe, we sort predictions by input ID if needed, 
-    # but since shuffle=False, `pred.numpy()` matches `chunk` order if we mapped it correctly.
-    # Actually, in our evaluate_hetero in inference.py, we just appended them, but here we want exact mapping.
-    # Let's do it safely by just assuming sequential is correct for a simple prototype,
-    # or doing a strict dictionary mapping if it was shuffled.
-    # The safest way is to extract it properly:
-    # Actually, the way evaluate_hetero did it was just appending, which assumes chronological chunk processing.
-    
-    # 7. Calculate and Display Metrics
     true_positives = np.sum((y_pred == 1) & (y_true == 1))
     false_positives = np.sum((y_pred == 1) & (y_true == 0))
     true_negatives = np.sum((y_pred == 0) & (y_true == 0))
