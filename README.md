@@ -78,24 +78,13 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ### Screenshots
 ![GenAI Fraud Defense UI Dashboard](image.png)
-![Live Pipeline Active Learning Results](image-1.png)
+<img width="1920" height="910" alt="image" src="https://github.com/user-attachments/assets/eacd98d3-6665-4343-b137-95021f783a98" />
+<img width="1920" height="910" alt="image" src="https://github.com/user-attachments/assets/aaf32cf5-a53b-4948-acd5-fa3805617d3e" />
+<img width="1920" height="910" alt="image" src="https://github.com/user-attachments/assets/249b3f7f-be44-4089-bf1a-9ee7a68afb2b" />
 
 ---
 
 ## 7. Developer & Code Inspection Guide
-
-### System Prerequisites
-Ensure you have the following installed on your machine:
-* **Node.js** (v18.0.0 or higher) & **npm** (for Frontend)
-* **Python** (v3.9 or higher) & **Conda** (for Backend)
-* **Git** (for repository cloning)
-
-### Tech Stack Details
-* **Frontend:** Next.js (v16), React (v19), TypeScript, Tailwind CSS (v4), Recharts, Lucide React icons.
-* **Backend:** FastAPI, Uvicorn, PyTorch (v2.9.1), PyTorch Geometric (PyG), Groq API, Pandas, NumPy, Scikit-learn, Python-dotenv.
-
----
-
 ### Local Setup & Execution
 
 #### 1. Clone the Repository
