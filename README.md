@@ -52,53 +52,7 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
-### Vertical Execution Flow
-```text
-                   ┌───────────────────────────┐
-                   │     Base Trained Model    │
-                   └─────────────┬─────────────┘
-                                 │
-                                 ▼
-                   ┌───────────────────────────┐
-                   │      Start Simulation     │
-                   └─────────────┬─────────────┘
-                                 │
-                                 ▼
- ┌──────────────────┐  ┌──────────────────┐
- │  GenAI Attack    │◄─┤ Unnoticed Frauds │◄───┐
- │    Generation    │  │ (Stronger Attack)│    │
- └────────┬─────────┘  └──────────────────┘    │
-          │                                    │
-          │ 1. Finds potholes in security      │
-          │ 2. Poisson distribution            │
-          │ 3. Noise transactions              │
-          │ 4. Business hours fraud blends     │
-          │                                    │
-          ▼                                    │
- ┌──────────────────┐                          │
- │  Multi-GNN Hetero│──────────────────────────┘
- │   Defends Attack │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │ Unnoticed Frauds │
- │  Staggered Out   │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │  Blended with    │
- │Real Transactions │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │ Fine-Tuned Model │─────────┐
- └──────────────────┘         │ (Updates Base Model)
-          ▲                   │
-          └───────────────────┘
-```
+![End-to-End System Workflow](image-2.png)
 
 ---
 
@@ -121,6 +75,10 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ### System Demonstration Video
 **YouTube Link**: [https://youtu.be/7wJwuQXMXkw](https://youtu.be/7wJwuQXMXkw)
+
+### Screenshots
+![GenAI Fraud Defense UI Dashboard](image.png)
+![Live Pipeline Active Learning Results](image-1.png)
 
 ---
 

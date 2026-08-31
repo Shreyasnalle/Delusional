@@ -47,10 +47,6 @@ dist/
 *.tar.gz
 *.tmp
 
-# Media files
-*.png
-*.jpg
-*.jpeg
-*.gif
+# Media files (ignore large video files)
 *.webm
 *.mp4
