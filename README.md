@@ -52,54 +52,150 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
+### Vertical Execution Flow
 ```text
-Start Simulation ➔ Red Team (generates attack) ➔ Blue Team (Multi-Hetero GNN model) ➔ Extract frauds which passed 
-                                ▲                                                                  │                         
-                                │                                                         Active GNN Fine-Tuning
-                                │                                                                 │
-           Use them to strengthen next attack generation  <-  Export Unnoticed Frauds  <- Shows Precision Report  
+                   ┌───────────────────────────┐
+                   │     Base Trained Model    │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+                   ┌───────────────────────────┐
+                   │      Start Simulation     │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+ ┌──────────────────┐  ┌──────────────────┐
+ │  GenAI Attack    │◄─┤ Unnoticed Frauds │◄───┐
+ │    Generation    │  │ (Stronger Attack)│    │
+ └────────┬─────────┘  └──────────────────┘    │
+          │                                    │
+          │ 1. Finds potholes in security      │
+          │ 2. Poisson distribution            │
+          │ 3. Noise transactions              │
+          │ 4. Business hours fraud blends     │
+          │                                    │
+          ▼                                    │
+ ┌──────────────────┐                          │
+ │  Multi-GNN Hetero│──────────────────────────┘
+ │   Defends Attack │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │ Unnoticed Frauds │
+ │  Staggered Out   │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │  Blended with    │
+ │Real Transactions │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │ Fine-Tuned Model │─────────┐
+ └──────────────────┘         │ (Updates Base Model)
+          ▲                   │
+          └───────────────────┘
 ```
 
+![End-to-End System Workflow](image-2.png)
+
 ---
 
-## 5. Photos 
-![alt text](image.png)
-![alt text](image-1.png)
+## 5. Datasets and Model Insights
 
-## 6. Developer & Code Inspection Guide
+* **Base Training Dataset:** The core defense model was trained using the official [IBM Transactions for Anti-Money Laundering (AML) Dataset](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml) hosted on Kaggle (`ealtman2019/ibm-transactions-for-anti-money-laundering-aml`).
+* **Total Transactions (Graph Edges):** Processed **5,000,000 (5 Million) payment transactions** for feature extraction, node degree calculation, and graph edge attribute construction.
+* **Total Accounts (Graph Nodes):** Built on a heterogeneous network graph consisting of **1,754,264 unique account nodes**.
+* **Supported Currencies (15 Types):** Multi-currency transaction support including **US Dollar, Euro, UK Pound, Bitcoin, Yen, Yuan, Canadian Dollar, Rupee, Australian Dollar, Ruble, Shekel, Brazil Real, Mexican Peso, Swiss Franc, and Saudi Riyal**.
+* **Payment Methods / Formats (7 Types):** Captures multi-channel financial flows across **ACH, Wire Transfer, Credit Card, Cheque, Cash, Bitcoin, and Reinvestment**.
+* **Base Model Performance (Before Fine-Tuning):**
+  * **Evaluation Benchmark:** Tested against a 100,000 transaction attack stream (39,790 fraudulent, 60,210 legitimate).
+  * **True Positives (TP):** 28,086 detected frauds.
+  * **False Negatives (FN):** 11,704 missed frauds.
+  * **False Positives (FP):** 14,712 false alarms.
+  * **True Negatives (TN):** 45,498 clean transactions verified.
+  * **Baseline Precision:** 65.62%
+  * **Baseline Recall / Detection Rate:** 70.59%
+  * *Note: These figures represent the initial baseline GNN performance prior to autonomous Red Team active fine-tuning iterations.*
+
+---
+
+## 6. Video and Photos
+
+### System Demonstration Video
+![System Demonstration Video](Screencast%20from%202026-08-30%2023-42-40.webm)
+
+### Screenshots
+![GenAI Fraud Defense UI Dashboard](image.png)
+![Live Pipeline Active Learning Results](image-1.png)
+
+---
+
+## 7. Developer & Code Inspection Guide
+
+### System Prerequisites
+Ensure you have the following installed on your machine:
+* **Node.js** (v18.0.0 or higher) & **npm** (for Frontend)
+* **Python** (v3.9 or higher) & **Conda** (for Backend)
+* **Git** (for repository cloning)
+
+### Tech Stack Details
+* **Frontend:** Next.js (v16), React (v19), TypeScript, Tailwind CSS (v4), Recharts, Lucide React icons.
+* **Backend:** FastAPI, Uvicorn, PyTorch (v2.9.1), PyTorch Geometric (PyG), Groq API, Pandas, NumPy, Scikit-learn, Python-dotenv.
+
+---
 
 ### Local Setup & Execution
-To run the full stack locally:
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Shreyasnalle/Delusional.git
-   cd Delusional
-   ```
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/Shreyasnalle/Delusional.git
+cd Delusional
+```
 
-2. **Backend Setup (FastAPI + PyTorch GNN)**:
-   ```bash
-   conda create -n mastermoney python=3.9 -y
-   conda activate mastermoney
-   cd backend
-   pip install -r requirements.txt
-   uvicorn main:app --port 8000 --reload
-   ```
+#### 2. Backend Setup (FastAPI + PyTorch GNN)
+```bash
+# Create and activate conda environment
+conda create -n mastermoney python=3.9 -y
+conda activate mastermoney
 
-3. **Frontend Setup (Next.js)**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser.
+# Navigate to backend directory
+cd backend
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Create .env file with your Groq API key
+echo "GROQ_API_KEY=your_groq_api_key_here" > .env
+
+# Run FastAPI backend server
+uvicorn main:app --port 8000 --reload
+```
+*(Backend running at `http://localhost:8000`)*
+
+#### 3. Frontend Setup (Next.js + React + TypeScript)
+```bash
+# Open a new terminal and navigate to frontend directory
+cd frontend
+
+# Install Node modules
+npm install
+
+# Start Next.js development server
+npm run dev
+```
+*(Frontend accessible at `http://localhost:3000`)*
 
 ---
 
-### Kaggle GPU Cloud Server Code
-For training large graph datasets on GPU, use **Kaggle GPU Instances** (Recommended GPU: **Kaggle T4 x2 GPU**).
+## 8. Kaggle GPU Cloud Server Code
 
-Run the following code block in a Kaggle Notebook cell to launch a remote Jupyter server via Cloudflare Tunnel:
+For training the model on larger graph datasets using **Kaggle GPU Instances** (Recommended Hardware: **Kaggle T4 x2 GPU**):
+
+Run the following Python code block in a Kaggle Notebook cell to launch a remote Jupyter server via Cloudflare Tunnel:
 
 ```python
 import os, time
