@@ -52,54 +52,6 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
-### Vertical Execution Flow
-```text
-                   ┌───────────────────────────┐
-                   │     Base Trained Model    │
-                   └─────────────┬─────────────┘
-                                 │
-                                 ▼
-                   ┌───────────────────────────┐
-                   │      Start Simulation     │
-                   └─────────────┬─────────────┘
-                                 │
-                                 ▼
- ┌──────────────────┐  ┌──────────────────┐
- │  GenAI Attack    │◄─┤ Unnoticed Frauds │◄───┐
- │    Generation    │  │ (Stronger Attack)│    │
- └────────┬─────────┘  └──────────────────┘    │
-          │                                    │
-          │ 1. Finds potholes in security      │
-          │ 2. Poisson distribution            │
-          │ 3. Noise transactions              │
-          │ 4. Business hours fraud blends     │
-          │                                    │
-          ▼                                    │
- ┌──────────────────┐                          │
- │  Multi-GNN Hetero│──────────────────────────┘
- │   Defends Attack │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │ Unnoticed Frauds │
- │  Staggered Out   │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │  Blended with    │
- │Real Transactions │
- └────────┬─────────┘
-          │
-          ▼
- ┌──────────────────┐
- │ Fine-Tuned Model │─────────┐
- └──────────────────┘         │ (Updates Base Model)
-          ▲                   │
-          └───────────────────┘
-```
-
 ![End-to-End System Workflow](image-2.png)
 
 ---
@@ -111,22 +63,16 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 * **Total Accounts (Graph Nodes):** Built on a heterogeneous network graph consisting of **1,754,264 unique account nodes**.
 * **Supported Currencies (15 Types):** Multi-currency transaction support including **US Dollar, Euro, UK Pound, Bitcoin, Yen, Yuan, Canadian Dollar, Rupee, Australian Dollar, Ruble, Shekel, Brazil Real, Mexican Peso, Swiss Franc, and Saudi Riyal**.
 * **Payment Methods / Formats (7 Types):** Captures multi-channel financial flows across **ACH, Wire Transfer, Credit Card, Cheque, Cash, Bitcoin, and Reinvestment**.
-* **Base Model Performance (Before Fine-Tuning):**
-  * **Evaluation Benchmark:** Tested against a 100,000 transaction attack stream (39,790 fraudulent, 60,210 legitimate).
-  * **True Positives (TP):** 28,086 detected frauds.
-  * **False Negatives (FN):** 11,704 missed frauds.
-  * **False Positives (FP):** 14,712 false alarms.
-  * **True Negatives (TN):** 45,498 clean transactions verified.
-  * **Baseline Precision:** 65.62%
-  * **Baseline Recall / Detection Rate:** 70.59%
-  * *Note: These figures represent the initial baseline GNN performance prior to autonomous Red Team active fine-tuning iterations.*
+* **Base Model Performance(example):**
+  *These insights represent an attack while testing, number will vary with different attack runs.*
+  <img width="584" height="276" alt="image" src="https://github.com/user-attachments/assets/d66696c0-0dfb-4188-a89a-a720b36b8aa6" />
 
 ---
 
 ## 6. Video and Photos
 
 ### System Demonstration Video
-![System Demonstration Video](Screencast%20from%202026-08-30%2023-42-40.webm)
+   **YouTube Link** : https://youtu.be/7wJwuQXMXkw
 
 ### Screenshots
 ![GenAI Fraud Defense UI Dashboard](image.png)
@@ -136,18 +82,6 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 7. Developer & Code Inspection Guide
 
-### System Prerequisites
-Ensure you have the following installed on your machine:
-* **Node.js** (v18.0.0 or higher) & **npm** (for Frontend)
-* **Python** (v3.9 or higher) & **Conda** (for Backend)
-* **Git** (for repository cloning)
-
-### Tech Stack Details
-* **Frontend:** Next.js (v16), React (v19), TypeScript, Tailwind CSS (v4), Recharts, Lucide React icons.
-* **Backend:** FastAPI, Uvicorn, PyTorch (v2.9.1), PyTorch Geometric (PyG), Groq API, Pandas, NumPy, Scikit-learn, Python-dotenv.
-
----
-
 ### Local Setup & Execution
 
 #### 1. Clone the Repository
@@ -156,39 +90,22 @@ git clone https://github.com/Shreyasnalle/Delusional.git
 cd Delusional
 ```
 
-#### 2. Backend Setup (FastAPI + PyTorch GNN)
+#### 2. Backend Setup 
 ```bash
-# Create and activate conda environment
 conda create -n mastermoney python=3.9 -y
 conda activate mastermoney
-
-# Navigate to backend directory
 cd backend
-
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Create .env file with your Groq API key
 echo "GROQ_API_KEY=your_groq_api_key_here" > .env
-
-# Run FastAPI backend server
 uvicorn main:app --port 8000 --reload
 ```
-*(Backend running at `http://localhost:8000`)*
 
-#### 3. Frontend Setup (Next.js + React + TypeScript)
+#### 3. Frontend Setup
 ```bash
-# Open a new terminal and navigate to frontend directory
 cd frontend
-
-# Install Node modules
 npm install
-
-# Start Next.js development server
 npm run dev
 ```
-*(Frontend accessible at `http://localhost:3000`)*
-
 ---
 
 ## 8. Kaggle GPU Cloud Server Code
