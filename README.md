@@ -52,7 +52,53 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 
 ## 4. End-to-End System Workflow
 
-![End-to-End System Workflow](image-2.png)
+### Vertical Execution Flow
+```text
+                   ┌───────────────────────────┐
+                   │     Base Trained Model    │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+                   ┌───────────────────────────┐
+                   │      Start Simulation     │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+ ┌──────────────────┐  ┌──────────────────┐
+ │  GenAI Attack    │◄─┤ Unnoticed Frauds │◄───┐
+ │    Generation    │  │ (Stronger Attack)│    │
+ └────────┬─────────┘  └──────────────────┘    │
+          │                                    │
+          │ 1. Finds potholes in security      │
+          │ 2. Poisson distribution            │
+          │ 3. Noise transactions              │
+          │ 4. Business hours fraud blends     │
+          │                                    │
+          ▼                                    │
+ ┌──────────────────┐                          │
+ │  Multi-GNN Hetero│──────────────────────────┘
+ │   Defends Attack │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │ Unnoticed Frauds │
+ │  Staggered Out   │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │  Blended with    │
+ │Real Transactions │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │ Fine-Tuned Model │─────────┐
+ └──────────────────┘         │ (Updates Base Model)
+          ▲                   │
+          └───────────────────┘
+```
 
 ---
 
@@ -63,24 +109,34 @@ The **Blue Team Engine** intercepts and adapts to evasive attacks through an act
 * **Total Accounts (Graph Nodes):** Built on a heterogeneous network graph consisting of **1,754,264 unique account nodes**.
 * **Supported Currencies (15 Types):** Multi-currency transaction support including **US Dollar, Euro, UK Pound, Bitcoin, Yen, Yuan, Canadian Dollar, Rupee, Australian Dollar, Ruble, Shekel, Brazil Real, Mexican Peso, Swiss Franc, and Saudi Riyal**.
 * **Payment Methods / Formats (7 Types):** Captures multi-channel financial flows across **ACH, Wire Transfer, Credit Card, Cheque, Cash, Bitcoin, and Reinvestment**.
-* **Base Model Performance(example):**
-  *These insights represent an attack while testing, number will vary with different attack runs.*
+* **Base Model Performance (example):**
+
   <img width="584" height="276" alt="image" src="https://github.com/user-attachments/assets/d66696c0-0dfb-4188-a89a-a720b36b8aa6" />
+
+  *These insights represent an attack while testing, numbers will vary with different attack runs.*
 
 ---
 
 ## 6. Video and Photos
 
 ### System Demonstration Video
-   **YouTube Link** : https://youtu.be/7wJwuQXMXkw
-
-### Screenshots
-![GenAI Fraud Defense UI Dashboard](image.png)
-![Live Pipeline Active Learning Results](image-1.png)
+**YouTube Link**: [https://youtu.be/7wJwuQXMXkw](https://youtu.be/7wJwuQXMXkw)
 
 ---
 
 ## 7. Developer & Code Inspection Guide
+
+### System Prerequisites
+Ensure you have the following installed on your machine:
+* **Node.js** (v18.0.0 or higher) & **npm** (for Frontend)
+* **Python** (v3.9 or higher) & **Conda** (for Backend)
+* **Git** (for repository cloning)
+
+### Tech Stack Details
+* **Frontend:** Next.js (v16), React (v19), TypeScript, Tailwind CSS (v4), Recharts, Lucide React icons.
+* **Backend:** FastAPI, Uvicorn, PyTorch (v2.9.1), PyTorch Geometric (PyG), Groq API, Pandas, NumPy, Scikit-learn, Python-dotenv.
+
+---
 
 ### Local Setup & Execution
 
@@ -90,7 +146,7 @@ git clone https://github.com/Shreyasnalle/Delusional.git
 cd Delusional
 ```
 
-#### 2. Backend Setup 
+#### 2. Backend Setup
 ```bash
 conda create -n mastermoney python=3.9 -y
 conda activate mastermoney

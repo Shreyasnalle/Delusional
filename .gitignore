@@ -46,3 +46,11 @@ dist/
 *.zip
 *.tar.gz
 *.tmp
+
+# Media files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webm
+*.mp4
